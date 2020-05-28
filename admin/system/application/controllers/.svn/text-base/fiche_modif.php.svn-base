@@ -1,0 +1,112 @@
+<?php
+
+class Fiche_modif extends Controller {
+	
+	function index($id = '',$table = ''){ //On a en param�tres l'id et le nom de la table qui ont �t� pass�s en GET
+	
+		// Chargement des models utilis�s dans le controller (les models sont dans le dossiers /system/application/models )
+		$this->load->model('Model_fiche_modif');
+		
+		$update = "";
+		$donnees = "";
+		
+		if(isset($_POST['patronyme'])) //Modification m�diath�que
+		{
+			$patronyme = addslashes($_POST['patronyme']);  //Pour chaque input on ajoute des slashes pour prot�ger les apostrophes et on encode en utf8
+			$pays = addslashes($_POST['pays']);
+                        $region = addslashes($_POST['region']);
+                        $departement = addslashes($_POST['departement']);
+                        $commune = addslashes($_POST['commune']);
+                        $edifice_conservation = addslashes($_POST['edifice_conservation']);
+                        $denomination = addslashes($_POST['denomination']);
+                        $categorie = addslashes($_POST['categorie']);
+                        $materiau = addslashes($_POST['materiau']);
+                        $ref_reproduction = addslashes($_POST['ref_reproduction']);
+                        $auteur_cliche = addslashes($_POST['auteur_cliche']);
+                        $type_cliche = addslashes($_POST['type_cliche']);
+                        $annee_cliche = addslashes($_POST['annee_cliche']);
+                        $photo = addslashes($_POST['photo']);
+                        $ref_im = addslashes($_POST['ref_im']);
+                        $ref_pa = addslashes($_POST['ref_pa']);
+                        $ref_ia = addslashes($_POST['ref_ia']);
+                        $embleme = addslashes($_POST['embleme']);
+                        $individu = addslashes($_POST['individu']);
+                        $biographie = addslashes($_POST['biographie']);
+                        $date = addslashes($_POST['date']);
+                        $armes = addslashes($_POST['armes']);
+                        $cimiers = addslashes($_POST['cimiers']);
+                        $devise = addslashes($_POST['devise']);
+                        $bibliographie = addslashes($_POST['bibliographie']);
+                        $auteurs = addslashes($_POST['auteurs']);
+                        $titre = addslashes($_POST['titre']);
+                        $lieu_edition = addslashes($_POST['lieu_edition']);
+                        $editeur = addslashes($_POST['editeur']);
+                        $annee_edition = addslashes($_POST['annee_edition']);
+                        $reliure = addslashes($_POST['reliure']);
+                        $provenance = addslashes($_POST['provenance']);
+                        $site = addslashes($_POST['site']);
+                        $section = addslashes($_POST['section']);
+                        $cote = addslashes($_POST['cote']);
+                        $folio_emplacement = addslashes($_POST['folio_emplacement']);
+			
+			$this->db->query("UPDATE details SET
+														patronyme='$patronyme', 
+														pays='$pays',
+														region='$region',
+														departement='$departement',
+														commune='$commune',
+														edifice_conservation='$edifice_conservation',
+														denomination='$denomination',
+														categorie='$categorie',
+														materiau='$materiau',
+														ref_reproduction='$ref_reproduction',
+														auteur_cliche='$auteur_cliche',
+														type_cliche='$type_cliche',
+														annee_cliche='$annee_cliche',
+														photo='$photo',
+														cimiers='$cimiers',
+                                                                                                                armes='$armes',
+														devise='$devise',
+                                                                                                                embleme='$embleme',
+														bibliographie='$bibliographie',
+														biographie='$biographie',
+                                                                                                                auteurs='$auteurs',
+														titre='$titre',
+														lieu_edition='$lieu_edition',
+														editeur='$editeur',
+														annee_edition='$annee_edition',
+														reliure='$reliure',
+														provenance='$provenance',
+														site='$site',
+														section='$section',
+														cote='$cote',
+														folio_emplacement='$folio_emplacement'
+														WHERE id='$id'");
+                        
+														
+			header("Location: ".base_url()."administration"); //On redirige vers la page administration
+														
+		}
+		else
+		{
+			$donnees = $this->Model_fiche_modif->recherche_infos($id,$table); //On recherche les informations concernant la table
+			
+			// Tableau $data des variables � envoyer aux vues			
+                        $data = array(
+                            'donnees' => $donnees,
+                            'table' => $table,
+                            'update' => $update
+		);
+		
+		// Chargement des views � afficher (attention � l'ordre) (les views sont dans le dossiers /system/application/views )	
+		$this->load->view('administration/fiche_modif',$data);
+		}
+		
+		
+		
+		
+	}
+	
+}
+
+?>

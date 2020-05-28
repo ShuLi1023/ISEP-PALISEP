@@ -1,0 +1,74 @@
+<?php
+
+class Accueil extends Controller {
+
+	
+	function index(){
+
+// Chargement des models utilisés dans le controller (les models sont dans le dossiers /system/application/models )
+		$this->load->model('Model_recherche');			
+		$this->load->model('Model_fiche');
+		$this->load->model('Model_administration');		
+				
+		/*
+		|----------------------------------------------------------------------------------------------------
+		| Bouton de Déconnexion qui met la variable $session = FALSE (cad non connecté)			
+		|----------------------------------------------------------------------------------------------------
+		*/
+			$session = $this->session->userdata('logged_in');	// $session=TRUE (admin est connecté) ou $session=FALSE (admin est pas connecté)
+			if (isset($_POST['deconnexion']) && $_POST['deconnexion'] == 'Deconnexion') {
+				$newdata = array(
+					'logged_in' => FALSE
+				);
+				$this->session->set_userdata($newdata); 
+				$session = $this->session->userdata('logged_in');	// $session = FALSE
+				
+				header("Location: ".base_url()); 	//redirection sur l'accueil		
+			}
+		/*
+		|----------------------------------------------------------------------------------------------------
+		*/
+
+                /*
+		|----------------------------------------------------------------------------------------------------
+		| Incrémentation du compteur
+		|----------------------------------------------------------------------------------------------------
+		*/
+                    $fichier = fopen("compteur.txt","r");
+                    $infos = fgets($fichier,255);
+                    $infos = explode(" ", $infos);
+                    $visites = $infos[0];
+                    $date = $infos[1];
+                    $visites++;
+                    fclose($fichier);
+
+                    $fichier=fopen("compteur.txt","w");
+                    fwrite($fichier,$visites." ".$date);
+                    fclose($fichier);
+                /*
+		|----------------------------------------------------------------------------------------------------
+		*/
+
+	$photos=$this->Model_recherche->photo_liste(); 
+	$partenaires = $this->Model_administration->get_partenaires();
+	$presentation_livre2=$this->Model_administration->get_presentation_text();
+
+	// Tableau $data des variables à envoyer aux vues			
+		$data = array(
+			'connecte' => $session, // La variable $connecte est utilisé dans la vue footer.php 
+			'photos' => $photos,
+			'partenaires'=> $partenaires,
+			'presentation_livre2'=> $presentation_livre2
+		);
+		
+	// Chargement des views à afficher (attention à l'ordre) (les views sont dans le dossiers /system/application/views )	
+		$this->load->view('layout/header_accueil',$data);	
+		$this->load->view('accueil',$data);
+		$this->load->view('layout/footer_accueil',$data);	
+		
+	}
+}
+
+/* End of file welcome.php */
+/* Location: ./system/application/controllers/welcome.php */
+?>

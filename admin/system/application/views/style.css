@@ -1,0 +1,25 @@
+@CHARSET "ISO-8859-1";
+
+.map {
+	width: 1261px;
+	height: 1650px;
+	background:url(/system/application/views/map.png) left top;
+	position: relative;
+}
+
+.map .overlay {
+	width: 1270px;
+	height: 1650px;
+	background:url(/system/application/views/map.png) 1270px top;
+position: absolute;
+top:0;
+left:0;
+z-index: 1;	
+}
+
+.map img {
+	position: absolute;
+top:0;
+left:0;
+	z-index:2;
+}

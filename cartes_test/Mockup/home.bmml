@@ -1,0 +1,19 @@
+<mockup version="1.0" skin="sketch" measuredW="856" measuredH="444" mockupW="450" mockupH="400">
+  <controls>
+    <control controlID="1" controlTypeID="com.balsamiq.mockups::BrowserWindow" x="406" y="44" w="-1" h="-1" measuredW="450" measuredH="400" zOrder="0" locked="false" isInGroup="-1">
+      <controlProperties>
+        <text>A%20Web%20Page%0Ahttp%3A//palisep.fr</text>
+      </controlProperties>
+    </control>
+    <control controlID="9" controlTypeID="com.balsamiq.mockups::IconLabel" x="605" y="129" w="55" h="-1" measuredW="55" measuredH="69" zOrder="1" locked="false" isInGroup="-1">
+      <controlProperties>
+        <text>Palisep.fr</text>
+      </controlProperties>
+    </control>
+    <control controlID="10" controlTypeID="com.balsamiq.mockups::iPhoneMenu" x="523" y="225" w="-1" h="-1" measuredW="215" measuredH="155" zOrder="2" locked="false" isInGroup="-1">
+      <controlProperties>
+        <text>L%27Aube%2C%20%3E%0AL%27H%E9raldique%20et%20le%20livre%2C%20%3E%0AH%E9raldique%2C%20%3E%0AMarne%2C%20%3E%0ABiblioth%E8que%20en%20ligne%2C%20%3E</text>
+      </controlProperties>
+    </control>
+  </controls>
+</mockup>

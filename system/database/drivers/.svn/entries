@@ -1,0 +1,83 @@
+10
+
+dir
+54
+https://svn.forge.isep.fr/svn/a2heraldique/system/database/drivers
+https://svn.forge.isep.fr/svn/a2heraldique
+
+
+
+2011-03-05T16:17:45.250913Z
+3
+ccostet
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+d69dc997-9b37-4198-a975-94e568ca7886
+
+mssql
+dir
+
+sqlite
+dir
+
+oci8
+dir
+
+postgre
+dir
+
+mysql
+dir
+
+odbc
+dir
+
+index.html
+file
+
+
+
+
+2011-03-07T09:02:50.732896Z
+0227cfd904e99656279202032b98d4a7
+2011-03-05T16:17:45.250913Z
+3
+ccostet
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+114
+
+mysqli
+dir
+

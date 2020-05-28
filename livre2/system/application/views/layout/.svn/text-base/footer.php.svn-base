@@ -1,0 +1,22 @@
+<!-- fermeture des balises ouvertes dans la vue header.php-->
+
+<!-- Texte du bas de la page -->
+</div> <!-- page -->
+<div id="footer">
+  <p>
+    <a href="http://www.mediatheque.grand-troyes.fr" target=_blank>Médiathèque Grand Troyes</a>
+    <a href="#" onclick="getPartenaires();return false;">Partenaires</a>
+    <a href="contact">Contact</a>
+    <a href="administration" ><img src="<?php echo base_url()?>ressources/images/palisep.png" id="palisep"/></a>
+  </p>
+  <!-- ##### -->
+  <!--<p>Visiteur(s) : <?php echo count($_COOKIE['ci_session']);?></p>-->
+  
+</div> <!-- footer -->
+
+<div id="partenaires" title="Partenaires"></div>
+<div id="dico" title="Dictionnaire des figures héraldiques"></div>
+
+</div> <!-- bibliotheque -->
+</body>
+</html>

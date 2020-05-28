@@ -1,0 +1,12 @@
+
+
+
+
+
+<p id="bouton-recherche">
+<?php echo anchor('recherche_photo', 'Recherche');?>
+</p>
+
+
+
+

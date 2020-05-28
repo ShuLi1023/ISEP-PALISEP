@@ -1,0 +1,512 @@
+<?php
+
+class Recherche_photo extends Controller {  // Le nom de la classe est le nom du controller avec une majuscule
+	function index(){ 
+
+// Chargement des models utilisÃ©s dans le controller (les models sont dans le dossiers /system/application/models )
+		$this->load->model('Model_recherche');			
+		$this->load->model('Model_legende_photos');				
+		/*
+		|----------------------------------------------------------------------------------------------------
+		| Bouton de DÃ©connexion qui met la variable $session = FALSE (cad non connectÃ©)			
+		|----------------------------------------------------------------------------------------------------
+		*/
+			$session = $this->session->userdata('logged_in');	// $session=TRUE (admin est connectÃ©) ou $session=FALSE (admin est pas connectÃ©)
+			if (isset($_POST['deconnexion']) && $_POST['deconnexion'] == 'Deconnexion') {
+				$newdata = array(
+					'logged_in' => FALSE
+				);
+				$this->session->set_userdata($newdata); 
+				$session = $this->session->userdata('logged_in');	// $session = FALSE
+				
+				header("Location: ".base_url()); 	//redirection sur l'accueil		
+			}
+		/*
+		|----------------------------------------------------------------------------------------------------
+		*/	
+		
+	$donnees = NULL ; // le tableau de donnÃ©es est vide par dÃ©faut
+	$req=array();
+		
+/*
+|----------------------------------------------------------------------------------------------------
+| Recherche d' ICONOGRAPHIES (commune, edifice de conservation, village, patronyme, date, denomination, catégorie, materiaux, armes)
+|----------------------------------------------------------------------------------------------------
+*/
+	if (isset($_POST['rechercher_photo'])){
+		/*
+		|----------------------------------------------------------------------------------------------------
+		| Champ COMMUNE (Formulaire SELECT)
+		|----------------------------------------------------------------------------------------------------
+		*/
+			if($_POST['Commune'] != NULL ) {
+            $mots = explode(' ',$_POST['Commune'])	; // recupération des mots clés
+			// OU
+			$req[] = 'l.commune = "'.$_POST['Commune'].'"';
+			//$req[] = 'l.commune REGEXP "('.implode('|',$mots).')"';
+			//$donnees=$this->Model_legende_photos->infos_commune($requete_Commune);
+		}
+		/*
+		|----------------------------------------------------------------------------------------------------
+		*/
+		/*
+		|----------------------------------------------------------------------------------------------------
+		| Champ PATRONYME (ET)
+		|----------------------------------------------------------------------------------------------------
+		*/
+		if($_POST['Patronyme'] != NULL ) {
+            $mots = explode(' ',$_POST['Patronyme'])	; // recupération des mots clés
+			// ET
+				$requete_patro = 'l.famille REGEXP "('.$mots[0].')" ' ; 
+				for($i=1; $i<count($mots) ; $i++){
+					$requete_patro = $requete_patro.'AND l.famille REGEXP "('.$mots[$i].')" ' ;
+				}
+			$req[] = $requete_patro;
+			//$req[] = 'l.commune REGEXP "('.implode('|',$mots).')"';
+			//$donnees=$this->Model_legende_photos->infos_commune($requete_Commune);
+		}
+
+		/*
+		|----------------------------------------------------------------------------------------------------
+		*/
+		/*
+		|----------------------------------------------------------------------------------------------------
+		| Champ CIMIERS / ORNEMENTS EXTÉRIEURS (ET)
+		|----------------------------------------------------------------------------------------------------
+		*/
+		if($_POST['Cimiers'] != NULL ) {
+            $mots = explode(' ',$_POST['Cimiers'])	; // recupération des mots clés
+			// ET
+				$requete_cimiers = 'l.cimiers REGEXP "('.$mots[0].')" ' ; 
+				for($i=1; $i<count($mots) ; $i++){
+					$requete_cimiers = $requete_cimiers.'AND l.cimiers REGEXP "('.$mots[$i].')" ' ;
+				}
+			$req[] = $requete_cimiers;
+			//$req[] = 'l.commune REGEXP "('.implode('|',$mots).')"';
+			//$donnees=$this->Model_legende_photos->infos_commune($requete_Commune);
+		}
+
+
+		/*
+		|----------------------------------------------------------------------------------------------------
+		*/
+		/*
+		|----------------------------------------------------------------------------------------------------
+		| Champ VILLAGE (ET) --> NON UTILISE
+		|----------------------------------------------------------------------------------------------------
+		*/
+		/*if ( $_POST['Village'] != NULL ) {
+                    	$mots = explode(' ',$_POST['Village'])	; // recupération des mots clés
+			// OU
+			//$req[] = 'l.village REGEXP "('.implode('|',$mots).')"';
+			
+			//ET 
+			$requete_village = 'l.village REGEXP "('.$mots[0].')" ' ; 
+				for($i=1; $i<count($mots) ; $i++){
+					$requete_village = $requete_village.'AND l.village REGEXP "('.$mots[$i].')" ' ;
+				}
+			$req[] = $requete_village;
+			
+			//$donnees=$this->Model_legende_photos->infos_Village($requete_Village);
+		}*/
+		/*
+		|----------------------------------------------------------------------------------------------------
+		*/
+		/*
+		|----------------------------------------------------------------------------------------------------
+		| Champ REGION (ET)
+		|----------------------------------------------------------------------------------------------------
+		*/
+		if ( $_POST['region'] != NULL ) {
+                    	$mots = explode(' ',$_POST['region'])	; // recupération des mots clés
+
+			//ET 
+			$requete_region = 'l.région REGEXP "('.$mots[0].')" ' ; 
+				for($i=1; $i<count($mots) ; $i++){
+					$requete_region = $requete_region.'AND l.région REGEXP "('.$mots[$i].')" ' ;
+				}
+			$req[] = $requete_region;
+
+		}
+		/*
+		|----------------------------------------------------------------------------------------------------
+		*/
+		/*
+		|----------------------------------------------------------------------------------------------------
+		| Champ DATE (formulaire select)
+		|----------------------------------------------------------------------------------------------------
+		*/
+// Recherche par id sur les photos
+		if ( $_POST['Date'] != NULL ) {
+                    	$mots = explode(' ',$_POST['Date'])	; // recupération des mots clés
+			// OU
+			//$req[] = 'l.date REGEXP "('.implode('|',$mots).')"';
+			$req[] = 'l.date = "'.$_POST['Date'].'"';
+			//$donnees=$this->Model_legende_photos->infos_Date($requete_Date);
+		}
+		/*
+		|----------------------------------------------------------------------------------------------------
+		*/
+		/*
+		|----------------------------------------------------------------------------------------------------
+		| Champ DENOMINATION (formulaire select)
+		|----------------------------------------------------------------------------------------------------
+		*/
+		if ($_POST['Denomination'] != NULL ) {
+                    	$mots = explode(' ',$_POST['Denomination'])	; // recupération des mots clés
+			// OU
+			//$req[]= 'l.dénomination REGEXP "('.implode('|',$mots).')"';
+			$req[] = 'l.dénomination = "'.$_POST['Denomination'].'"';
+			//$donnees=$this->Model_legende_photos->infos_Denomination($requete_Denomination);
+		}
+
+		/*
+		|----------------------------------------------------------------------------------------------------
+		*/
+		/*
+		|----------------------------------------------------------------------------------------------------
+		| Champ CATEGORIE (formulaire select) NON UTILISE
+		|----------------------------------------------------------------------------------------------------
+		*/
+	/*	if ($_POST['Categorie'] != NULL ) {
+                    	$mots = explode(' ',$_POST['Categorie'])	; // recupération des mots clés
+			// OU
+			//$req[] = 'l.catégorie REGEXP "('.implode('|',$mots).')"';
+			$req[] = 'l.catégorie = "'.$_POST['Categorie'].'"';
+			//$donnees=$this->Model_legende_photos->infos_Categorie($requete_Categorie);
+		}*/
+		/*
+		|----------------------------------------------------------------------------------------------------
+		*/
+		/*
+		|----------------------------------------------------------------------------------------------------
+		| Champ EDIFICE DE CONSERVATION (ET)
+		|----------------------------------------------------------------------------------------------------
+		*/
+		if ( $_POST['Conservation'] != NULL ) {
+             $mots = explode(' ',$_POST['Conservation'])	; // recupération des mots clés
+			// OU
+			//$req[]= 'l.edifice_conservation REGEXP "('.implode('|',$mots).')"';
+			//ET
+			$requete_edifice = 'l.edifice_conservation REGEXP "('.$mots[0].')" ' ; 
+				for($i=1; $i<count($mots) ; $i++){
+					$requete_edifice = $requete_edifice.'AND l.edifice_conservation REGEXP "('.$mots[$i].')" ' ;
+				}
+			$req[] = $requete_edifice;
+			
+			//$donnees=$this->Model_legende_photos->infos_Conservation($requete_Conservation);
+		}
+		/*
+		|----------------------------------------------------------------------------------------------------
+		*/
+		/*
+		|----------------------------------------------------------------------------------------------------
+		| Champ MATERIAU (formulaire select) NON UTILISE
+		|----------------------------------------------------------------------------------------------------
+		*/
+		/*if ( $_POST['Materiau'] != NULL ) {
+                    	$mots = explode(' ',$_POST['Materiau'])	; // recupération des mots clés
+			// OU
+			//$req[] = 'l.matériau REGEXP "('.implode('|',$mots).')"';
+			$req[] = 'l.matériau = "'.$_POST['Materiau'].'"';
+			//$donnees=$this->Model_legende_photos->infos_Materiau($requete_Materiau);
+		} */
+		/*
+		|----------------------------------------------------------------------------------------------------
+		*/
+		/*
+		|----------------------------------------------------------------------------------------------------
+		| Champ ARMES (ET + mots dans le désordre)
+		|----------------------------------------------------------------------------------------------------
+		*/ 
+
+			if ($_POST['mot'] != NULL ) {
+				
+				$mots = explode(' ',$_POST['mot'])	; // recupération des mots clés
+
+				$requete_a = 'a.blasonnement_1 REGEXP "('.$mots[0].')" ' ; 
+				$requete_b = 'a.blasonnement_2 REGEXP "('.$mots[0].')" ' ; 
+				for($i=1; $i<count($mots) ; $i++){
+					$requete_a = $requete_a.'AND a.blasonnement_1 REGEXP "('.$mots[$i].')" ' ;
+					$requete_b = $requete_b.'AND a.blasonnement_2 REGEXP "('.$mots[$i].')" ' ;
+				}
+
+				$req[]='(('.$requete_a.' OR '.$requete_b.') AND l.vedette_chandon = a.patronyme)';
+			}
+		
+		/*
+		|----------------------------------------------------------------------------------------------------
+		*/
+		/*
+		|----------------------------------------------------------------------------------------------------
+		| Champ AUTEURS (ET)
+		|----------------------------------------------------------------------------------------------------
+		*/ 	
+		if ( $_POST['auteur'] != NULL ) {
+                $mots = explode(' ',$_POST['auteur'])	; // recupération des mots clés
+			//ET 
+			$requete_auteur = 'l.auteurs REGEXP "('.$mots[0].')" ' ; 
+				for($i=1; $i<count($mots) ; $i++){
+					$requete_auteur = $requete_auteur.'AND l.auteurs REGEXP "('.$mots[$i].')" ' ;
+				}
+			$req[] = $requete_auteur;
+		}	
+		/*
+		|----------------------------------------------------------------------------------------------------
+		*/
+		/*
+		|----------------------------------------------------------------------------------------------------
+		| Champ TITRE (ET)
+		|----------------------------------------------------------------------------------------------------
+		*/ 
+		if ( $_POST['titre'] != NULL ) {
+                $mots = explode(' ',$_POST['titre'])	; // recupération des mots clés
+			//ET 
+			$requete_titre = 'l.titre REGEXP "('.$mots[0].')" ' ; 
+				for($i=1; $i<count($mots) ; $i++){
+					$requete_titre = $requete_titre.'AND l.titre REGEXP "('.$mots[$i].')" ' ;
+				}
+			$req[] = $requete_titre;
+		}	
+		/*
+		|----------------------------------------------------------------------------------------------------
+		*/
+		/*
+		|----------------------------------------------------------------------------------------------------
+		| Champ LIEU EDITION (ET)
+		|----------------------------------------------------------------------------------------------------
+		*/	
+		if ( $_POST['lieu_edition'] != NULL ) {
+                $mots = explode(' ',$_POST['lieu_edition'])	; // recupération des mots clés
+			//ET 
+			$requete_lieu_edition = 'l.lieu_édition REGEXP "('.$mots[0].')" ' ; 
+				for($i=1; $i<count($mots) ; $i++){
+					$requete_lieu_edition = $requete_lieu_edition.'AND l.lieu_édition REGEXP "('.$mots[$i].')" ' ;
+				}
+			$req[] = $requete_lieu_edition;
+		}	
+		/*
+		|----------------------------------------------------------------------------------------------------
+		*/
+		/*
+		|----------------------------------------------------------------------------------------------------
+		| Champ ANNEE EDITION (ET)
+		|----------------------------------------------------------------------------------------------------
+		*/
+		if ( $_POST['annee_edition'] != NULL ) {
+                $mots = explode(' ',$_POST['annee_edition'])	; // recupération des mots clés
+			//ET 
+			$requete_annee_edition = 'l.année_édition REGEXP "('.$mots[0].')" ' ; 
+				for($i=1; $i<count($mots) ; $i++){
+					$requete_annee_edition = $requete_annee_edition.'AND l.année_édition REGEXP "('.$mots[$i].')" ' ;
+				}
+			$req[] = $requete_annee_edition;
+		}	
+		/*
+		|----------------------------------------------------------------------------------------------------
+		*/
+		/*
+		|----------------------------------------------------------------------------------------------------
+		| Champ EDITEUR (ET)
+		|----------------------------------------------------------------------------------------------------
+		*/
+		if ( $_POST['editeur'] != NULL ) {
+                $mots = explode(' ',$_POST['editeur'])	; // recupération des mots clés
+			//ET 
+			$requete_editeur = 'l.editeur REGEXP "('.$mots[0].')" ' ; 
+				for($i=1; $i<count($mots) ; $i++){
+					$requete_editeur = $requete_editeur.'AND l.editeur REGEXP "('.$mots[$i].')" ' ;
+				}
+			$req[] = $requete_editeur;
+		}	
+		/*
+		|----------------------------------------------------------------------------------------------------
+		*/
+		/*
+		|----------------------------------------------------------------------------------------------------
+		| Champ RELIURE (ET)
+		|----------------------------------------------------------------------------------------------------
+		*/	
+		if ( $_POST['reliure'] != NULL ) {
+                $mots = explode(' ',$_POST['reliure'])	; // recupération des mots clés
+			//ET 
+			$requete_reliure = 'l.reliure REGEXP "('.$mots[0].')" ' ; 
+				for($i=1; $i<count($mots) ; $i++){
+					$requete_reliure = $requete_reliure.'AND l.reliure REGEXP "('.$mots[$i].')" ' ;
+				}
+			$req[] = $requete_reliure;
+		}	
+		/*
+		|----------------------------------------------------------------------------------------------------
+		*/
+		/*
+		|----------------------------------------------------------------------------------------------------
+		| Champ PROVENANCE (ET)
+		|----------------------------------------------------------------------------------------------------
+		*/	
+		if ( $_POST['provenance'] != NULL ) {
+                $mots = explode(' ',$_POST['provenance'])	; // recupération des mots clés
+			//ET 
+			$requete_provenance = 'l.provenance REGEXP "('.$mots[0].')" ' ; 
+				for($i=1; $i<count($mots) ; $i++){
+					$requete_provenance = $requete_provenance.'AND l.provenance REGEXP "('.$mots[$i].')" ' ;
+				}
+			$req[] = $requete_provenance;
+		}	
+		/*
+		|----------------------------------------------------------------------------------------------------
+		*/
+		/*
+		|----------------------------------------------------------------------------------------------------
+		| Champ SITE (ET)
+		|----------------------------------------------------------------------------------------------------
+		*/	
+		if ( $_POST['site'] != NULL ) {
+                $mots = explode(' ',$_POST['site'])	; // recupération des mots clés
+			//ET 
+			$requete_site = 'l.site REGEXP "('.$mots[0].')" ' ; 
+				for($i=1; $i<count($mots) ; $i++){
+					$requete_site = $requete_site.'AND l.site REGEXP "('.$mots[$i].')" ' ;
+				}
+			$req[] = $requete_site;
+		}	
+		/*
+		|----------------------------------------------------------------------------------------------------
+		*/
+		/*
+		|----------------------------------------------------------------------------------------------------
+		| Champ SECTION (ET)
+		|----------------------------------------------------------------------------------------------------
+		*/
+		if ( $_POST['section'] != NULL ) {
+                $mots = explode(' ',$_POST['section'])	; // recupération des mots clés
+			//ET 
+			$requete_section = 'l.section REGEXP "('.$mots[0].')" ' ; 
+				for($i=1; $i<count($mots) ; $i++){
+					$requete_section = $requete_section.'AND l.section REGEXP "('.$mots[$i].')" ' ;
+				}
+			$req[] = $requete_section;
+		}	
+		/*
+		|----------------------------------------------------------------------------------------------------
+		*/
+		/*
+		|----------------------------------------------------------------------------------------------------
+		| Champ COTE (ET)
+		|----------------------------------------------------------------------------------------------------
+		*/
+		if ( $_POST['cote'] != NULL ) {
+                $mots = explode(' ',$_POST['cote'])	; // recupération des mots clés
+			//ET 
+			$requete_cote = 'l.cote REGEXP "('.$mots[0].')" ' ; 
+				for($i=1; $i<count($mots) ; $i++){
+					$requete_cote = $requete_cote.'AND l.cote REGEXP "('.$mots[$i].')" ' ;
+				}
+			$req[] = $requete_cote;
+		}	
+		/*
+		|----------------------------------------------------------------------------------------------------
+		*/
+		/*
+		|----------------------------------------------------------------------------------------------------
+		| Champ FOLIO (ET)
+		|----------------------------------------------------------------------------------------------------
+		*/
+		if ( $_POST['folio'] != NULL ) {
+                $mots = explode(' ',$_POST['folio'])	; // recupération des mots clés
+			//ET 
+			$requete_folio = 'l.folio_emplacement REGEXP "('.$mots[0].')" ' ; 
+				for($i=1; $i<count($mots) ; $i++){
+					$requete_folio = $requete_folio.'AND l.folio_emplacement REGEXP "('.$mots[$i].')" ' ;
+				}
+			$req[] = $requete_folio;
+		}			
+		/*
+		|----------------------------------------------------------------------------------------------------
+		*/
+		/*
+		|----------------------------------------------------------------------------------------------------
+		| Champ PAYS (ET)
+		|----------------------------------------------------------------------------------------------------
+		*/
+		if ( $_POST['pays'] != NULL ) {
+                $mots = explode(' ',$_POST['pays'])	; // recupération des mots clés
+			//ET 
+			$requete_pays = 'l.pays REGEXP "('.$mots[0].')" ' ; 
+				for($i=1; $i<count($mots) ; $i++){
+					$requete_pays = $requete_pays.'AND l.pays REGEXP "('.$mots[$i].')" ' ;
+				}
+			$req[] = $requete_pays;
+		}		
+		/*
+		|----------------------------------------------------------------------------------------------------
+		*/
+		/*
+		|----------------------------------------------------------------------------------------------------
+		| Validation formulaire croisée
+		|----------------------------------------------------------------------------------------------------
+		*/			
+		if($req==NULL){
+			 header("Location: ".base_url().'/recherche_photo');
+			}else{
+			$requete=$req[0];
+				for($i=1;$i<count($req);$i++){
+					$requete=$requete.' AND '.$req[$i];
+				}
+				$livre = 'AND (l.dénomination = "bréviaire du diocèse de Troyes" 
+										OR l.dénomination = "cachet" 
+										OR l.dénomination = "contre-sceau" 
+										OR l.dénomination = "dessin sur estampe" 
+										OR l.dénomination = "dessin" 
+										OR l.dénomination = "empreinte de sceau" 
+										OR l.dénomination = "enluminure" 
+										OR l.dénomination = "estampe" 
+										OR l.dénomination = "ex-libris" 
+										OR l.dénomination = "filigrane" 
+										OR l.dénomination = "livre" 
+										OR l.dénomination = "manuscrit" 
+										OR l.dénomination = "miniature" 
+										OR l.dénomination = "reliure" 
+										OR l.dénomination = "timbre à sec"
+										OR l.dénomination = "Lithographie"
+										OR l.dénomination = "gravure"
+										OR l.dénomination = "dessin à la plume"
+										OR l.dénomination = "estampage"
+										OR l.dénomination = "relevé"
+										) ';
+				$donnees = $this->Model_legende_photos->recherche_photo($requete.''.$livre);	
+			}	
+		/*
+		|----------------------------------------------------------------------------------------------------
+		*/
+	}
+/*
+|----------------------------------------------------------------------------------------------------
+*/
+	$dates = $this->Model_recherche->date_liste();
+	$materiaux = $this->Model_recherche->materiau_liste();
+	$categories =$this->Model_recherche->categorie_liste();
+	$denominations = $this->Model_recherche->denomination_liste();
+        $communes = $this->Model_recherche->commune_liste();
+
+// Tableau $data des variables Ã  envoyer aux vues			
+		$data = array(
+			'connecte' => $session, // La variable $connecte est utilisÃ© dans la vue footer.php 
+			'donnees'=> $donnees, 
+			'dates'=> $dates,
+			'materiaux' => $materiaux,
+			'categories' => $categories,
+			'denominations'=> $denominations,
+                        'communes'=> $communes,
+		);
+				
+// Chargement des views Ã  afficher (attention Ã  l'ordre) (les views sont dans le dossiers /system/application/views )	
+		$this->load->view('layout/header',$data);				
+		$this->load->view('recherche_photo',$data);	
+		$this->load->view('layout/footer',$data);	
+	}
+}
+
+/* End of file welcome.php */
+/* Location: ./system/application/controllers/welcome.php */
+?>

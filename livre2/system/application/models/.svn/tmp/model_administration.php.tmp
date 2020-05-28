@@ -1,0 +1,60 @@
+<?php
+
+class Model_administration extends Model{
+	function identifiant(){
+		$identifiants = $this->db->query('
+			SELECT * 
+			FROM utilisateurs
+		');
+        return $identifiants->result();
+	}
+	
+	function mise_a_jour($fichier,$table,$liste)
+	{	
+	  if ($_SERVER['SERVER_ADDR']=='127.0.0.1')
+	    {
+	      $requete = $this->db->query("LOAD DATA INFILE '".$fichier."'
+									INTO TABLE ".$table."
+									FIELDS 
+										TERMINATED BY '\t'
+									LINES
+										TERMINATED BY '\r'
+									IGNORE 1 LINES
+									(".$liste.")");
+	    }
+	  else
+	    {
+	      $requete = $this->db->query("LOAD DATA LOCAL INFILE '".$fichier."'
+									INTO TABLE ".$table."
+									FIELDS 
+										TERMINATED BY '\t'
+									LINES
+										TERMINATED BY '\r'
+									IGNORE 1 LINES
+									(".$liste.")");
+	    }
+	      
+<<<<<<< .mine
+		$departement = utf8_encode('dï¿½partment');
+		$region = utf8_encode('rï¿½gion');
+=======
+		$departement = utf8_encode('départment');
+		$region = utf8_encode('région');
+		$this->db->query("UPDATE details SET ".$departement."='Marne'");
+>>>>>>> .r175
+	}
+	
+	function affichage_table($table)
+	{
+		$requete = $this->db->query("SELECT * FROM ".$table);
+		return $requete; 
+	}
+	
+	function modif_mdp($mdp)
+	{
+		$this->db->query("UPDATE utilisateurs SET password='$mdp' WHERE id='1'");
+	}
+	
+	function
+}
+?>

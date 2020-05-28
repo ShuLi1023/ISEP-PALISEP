@@ -1,0 +1,239 @@
+<!-- Si l'administrateur est connect� -->
+<?php if ($connecte == true ){ ?>
+
+<!-- Verification statut admin-->
+<?php //if ($_SESSION['statut'] == 1 ){ ?>
+
+<div class="corps">	
+
+<br /><br /><h3><center>Espace d'administration</center></h3>
+
+<br /><br />
+
+<div class="navigation">
+    <a href="http://www.livre2.palisep.fr">Retour à l'accueil</a>
+</div>
+
+<!-- Partie pour changer le mot de passe d'accés -->
+<fieldset style='background-color:white;'>
+	<legend><strong><font color="#A42903">Accueil</font></strong></legend><br />
+	<?php if($acces=="")
+	{ ?>
+	<form method="post" action="">
+		<label style="float:left;width:190px;" for="login">Login :</label><input type="text" name="login" id="login" /><br /><br />
+		<label style="float:left;width:190px;" for="mdp_actuel">Mot de passe actuel :</label><input type="password" name="mdp_actuel" id="mdp_actuel" /><br /><br />
+		<input type="submit" name="submit" value="Valider" />
+	</form>
+	<?php 
+	} 
+	else if($acces=="true")
+	{?>
+	<form method="post" action="">
+		<label style="float:left;width:190px;" for="new_mdp">Nouveau mot de passe :</label><input type="password" name="new_mdp" id="new_mdp" /><br /><br />
+		<label style="float:left;width:190px;" for="new_mdp_bis">Saisissez de nouveau :</label><input type="password" name="new_mdp_bis" id="new_mdp_bis" /><br /><br />
+		<input type="submit" name="submit" value="Valider" />
+	</form>
+	<?php
+	}
+	else
+	{
+		echo $acces;
+	?>
+	<h4><a href="javascript:history.back()"><<< Retour sur le formulaire </a></h4>
+	<?php 
+	} ?>
+</fieldset>
+<br /><br />
+
+<!-- Partie de mise a jour de la base (insertion de fichiers excel) -->
+<fieldset style='background-color:white;'>
+	<legend><strong><font color="#A42903">Mise à jour de la base par le fichier Excel</font></strong></legend><br />
+	
+	<?php if(!isset($_FILES['mediatheque']) && !isset($_FILES['images'])){ ?>
+		<form method="post" action="" enctype="multipart/form-data">
+			<label style="float:left;width:190px;" for="mediatheque">Objets/livres :</label>
+			<input type="file" name="mediatheque" id="mediatheque" />
+			<input type="submit" name="submit" value="Ajouter" />
+		</form>
+		
+	<?php } else{ 
+		echo $transfert; ?>
+		<h4><a href="javascript:history.back()"><<< Retour sur le formulaire </a></h4>
+	<?php
+		}
+	?>
+</fieldset><br /><br />
+
+<?php //} ?>
+
+<!--Partie de modification des donn�es de la base-->
+<fieldset style='background-color:white;'>
+	<legend><strong><font color="#A42903">Modification des contenus</font></strong></legend><br />
+	<h3><center><a href='#photos' onclick='visibilite("photos");'>Objets/livres</a></center></h3><br />
+	
+	<div id='photos' style='display:block;width:820px;overflow:auto;'><table border='1' style="border-collapse:collapse; width:100%;">
+		<tr>
+			<th>Libellé image</th>
+                        <th>Patronyme</th>
+			<th>Individu</th>
+                        <th>Biographie</th>
+			<th>Pays</th>
+			<th>Région</th>
+			<th>Département</th>
+			<th>Commune</th>
+                        <th>Armes</th>
+                        <th>Emblème</th>
+			<th>Ornements extérieurs</th>
+			<th>Devise/Légende</th>
+			<th>Edifice de conservation</th>
+			<th>Dénomination</th>
+			<th>Catégorie</th>
+			<th>Matériau</th>
+			<th>Référence de la reproduction</th>
+			<th>Auteur du cliché</th>
+			<th>Type du cliché</th>
+			<th>Année du cliché</th>
+			<th>Type de photo</th>
+			<th>Référence IM</th>
+			<th>Référence PA</th>
+			<th>Référence IA</th>
+			<th>Notes</th>
+			<th>Auteur(s)</th>
+			<th>Titre</th>
+			<th>Lieu d'édition</th>
+			<th>Editeur</th>
+			<th>Année d'édition</th>
+			<th>Reliure</th>
+			<th>Provenance</th>
+			<th>Site</th>
+			<th>Section</th>
+			<th>Cote</th>
+                        <th>Folio ou emplacement</th>
+		</tr>
+		<?php 
+		
+			foreach($donnees_photos as $data1) { 
+		?>
+		<tr>
+                    <td><a href='#' onclick="ConfirmMessage(<?php echo $data1['id']; ?>);"><img width="10px" src="<?php echo base_url() ?>ressources/images/supprimer.png" /></a>&nbsp;<a href='#' onclick="getFiche(<?php echo $data1['id']; ?>,'details');return false;" title=<?php echo $data1['id']; ?>><?php if (!empty($data1['auteur_cliche'])){echo $data1['libelle_image']; }?></a></td>
+			<td><?php if (!empty($data1['patronyme'])){ echo $data1['patronyme']; }?></td>
+			<td><?php if (!empty($data1['individu'])){ echo $data1['individu']; }?></td>
+                        <td><?php if (!empty($data1['biographie'])){ echo $data1['biographie']; }?></td>
+                        <td><?php if (!empty($data1['pays'])){ echo $data1['pays']; }?></td>
+			<td><?php if (!empty($data1['region'])){ echo $data1['region']; }?></td>
+			<td><?php if (!empty($data1['departement'])){ echo $data1['departement']; }?></td>
+			<td><?php if (!empty($data1['commune'])){ echo $data1['commune']; }?></td>
+                        <td><?php if (!empty($data1['armes'])){ echo $data1['armes']; }?></td>
+                        <td><?php if (!empty($data1['embleme'])){ echo $data1['embleme']; }?></td>
+			<td><?php if (!empty($data1['cimiers'])){ echo $data1['cimiers']; }?></td>
+			<td><?php if (!empty($data1['devise'])){ echo $data1['devise']; }?></td>
+			<td><?php if (!empty($data1['edifice_conservation'])){ echo $data1['edifice_conservation']; }?></td>
+			<td><?php if (!empty($data1['denomination'])){ echo $data1['denomination']; }?></td>
+			<td><?php if (!empty($data1['categorie'])){ echo $data1['categorie']; }?></td>
+			<td><?php if (!empty($data1['materiau'])){ echo $data1['materiau']; }?></td>
+			<td><?php if (!empty($data1['ref_reproduction'])){ echo $data1['ref_reproduction']; }?></td>
+			<td><?php if (!empty($data1['auteur_cliche'])){ echo $data1['auteur_cliche']; }?></td>
+			<td><?php if (!empty($data1['type_cliche'])){ echo $data1['type_cliche']; }?></td>
+			<td><?php if (!empty($data1['annee_cliche'])){ echo $data1['annee_cliche']; }?></td>
+			<td><?php if (!empty($data1['photo'])){ echo $data1['photo']; }?></td>
+			<td><?php if (!empty($data1['ref_im'])){ echo $data1['ref_im']; }?></td>
+			<td><?php if (!empty($data1['ref_pa'])){ echo $data1['ref_pa']; }?></td>
+			<td><?php if (!empty($data1['ref_ia'])){ echo $data1['ref_ia']; }?></td>
+			<td><?php if (!empty($data1['biographie'])){ echo $data1['biographie']; }?></td>
+			<td><?php if (!empty($data1['notes'])){ echo $data1['notes']; }?></td>
+			<td><?php if (!empty($data1['bibliographie'])){ echo $data1['bibliographie']; }?></td>
+			<td><?php if (!empty($data1['auteurs'])){ echo $data1['auteurs']; }?></td>
+			<td><?php if (!empty($data1['titre'])){ echo $data1['titre']; }?></td>
+			<td><?php if (!empty($data1['lieu_edition'])){ echo $data1['lieu_edition']; }?></td>
+			<td><?php if (!empty($data1['editeur'])){ echo $data1['editeur']; }?></td>
+			<td><?php if (!empty($data1['annee_edition'])){ echo $data1['annee_edition']; }?></td>
+			<td><?php if (!empty($data1['reliure'])){ echo $data1['reliure']; }?></td>
+			<td><?php if (!empty($data1['provenance'])){ echo $data1['provenance']; }?></td>
+			<td><?php if (!empty($data1['site'])){ echo $data1['site']; }?></td>
+			<td><?php if (!empty($data1['section'])){ echo $data1['section']; }?></td>
+			<td><?php if (!empty($data1['cote'])){ echo $data1['cote']; }?></td>
+                        <td><?php if (!empty($data1['folio_emplacement'])){ echo $data1['folio_emplacement']; }?></td>
+		</tr>
+		<?php } ?>
+	</table>
+	<br />
+	<?php echo "<a href='".base_url()."administration/index/a'>A</a> - <a href='".base_url()."administration/index/b'>B</a> - <a href='".base_url()."administration/index/c'>C</a> - <a href='".base_url()."administration/index/d'>D</a> - <a href='".base_url()."administration/index/e'>E</a> - <a href='".base_url()."administration/index/f'>F</a>
+                     - <a href='".base_url()."administration/index/g'>G</a> - <a href='".base_url()."administration/index/h-i-j-k'>H/I/J/K</a> - <a href='".base_url()."administration/index/l'>L</a> - <a href='".base_url()."administration/index/m'>M</a> - <a href='".base_url()."administration/index/n'>N</a>
+                     - <a href='".base_url()."administration/index/o-p-q'>O/P/Q</a> - <a href='".base_url()."administration/index/r'>R</a> - <a href='".base_url()."administration/index/s'>S</a> - <a href='".base_url()."administration/index/t'>T</a> - <a href='".base_url()."administration/index/u-v'>U/V</a> - <a href='".base_url()."administration/index/w-x-y-z'>W/X/Y/Z</a>
+        "?>
+	</div>
+	
+</fieldset><br /><br />
+
+<fieldset style='background-color:white;'>
+	<legend><strong><font color="#A42903">Ajout d'un contenu</font></strong></legend><br />
+        <h3><center><a href='#photos' onclick='visibilite("modif");'>Ajout manuel d'un contenu</a></center></h3><br />
+        <div id='modif' style="display:block;">
+            <?php if($booleen_manuel==""){ ?>
+        <form method="post" action="" enctype="multipart/form-data">
+		<div style="float:left;margin-left:20px;">
+			<label style="float:left;width:190px;" for="images">Images (fichier .jpg):</label><br />
+			<input type="file" name="images" id="images" /><br /><br />
+
+			<label style="float:left;width:190px;" for="patronyme">Patronyme :</label><input type="text" name="patronyme" id="patronyme" /><br /><br />
+			<label style="float:left;width:190px;" for="pays">Pays :</label><input type="text" name="pays" id="pays" /><br /><br />
+			<label style="float:left;width:190px;" for="region">Région :</label><input type="text" name="region" id="region" /><br /><br />
+			<label style="float:left;width:190px;" for="departement">Département :</label><input type="text" name="departement" id="departement" /><br /><br />
+			<label style="float:left;width:190px;" for="commune">Commune :</label><input type="text" name="commune" id="commune" /><br /><br />
+			<label style="float:left;width:190px;" for="edifice_conservation">Edifice de conservation :</label><input type="text" name="edifice_conservation" id="edifice_conservation" /><br /><br />
+			<label style="float:left;width:190px;" for="denomination">Dénomination :</label><input type="text" name="denomination" id="denomination" /><br /><br />
+			<label style="float:left;width:190px;" for="categorie">Catégorie :</label><input type="text" name="categorie" id="categorie" /><br /><br />
+			<label style="float:left;width:190px;" for="materiau">Matériau :</label><input type="text" name="materiau" id="materiau" /><br /><br />
+			<label style="float:left;width:190px;" for="ref_reproduction">Référence de la reproduction :</label><input type="text" name="ref_reproduction" id="ref_reproduction" /><br /><br />
+			<label style="float:left;width:190px;" for="auteur_cliche">Auteur du cliché :</label><input type="text" name="auteur_cliche" id="auteur_cliche" /><br /><br />
+			<label style="float:left;width:190px;" for="type_cliche">Type du cliché :</label><input type="text" name="type_cliche" id="type_cliche" /><br /><br />
+			<label style="float:left;width:190px;" for="annee_cliche">Année du cliché :</label><input type="text" name="annee_cliche" id="annee_cliche" /><br /><br />
+			<label style="float:left;width:190px;" for="photo">Type de photo :</label><input type="text" name="photo" id="photo" /><br /><br />
+			<label style="float:left;width:190px;" for="ref_im">Référence IM :</label><input type="text" name="ref_im" id="ref_im" /><br /><br />
+			<label style="float:left;width:190px;" for="ref_pa">Référence PA :</label><input type="text" name="ref_pa" id="ref_pa" /><br /><br />
+			<label style="float:left;width:190px;" for="ref_ia">Référence IA :</label><input type="text" name="ref_ia" id="ref_ia" /><br /><br />
+
+                </div>
+		<div style="float:right;margin-right:20px;">
+			<label style="float:left;width:190px;" for="individu">Individu :</label><input type="text" name="individu" id="individu" /><br /><br />
+			<label style="float:left;width:190px;" for="biographie">Biographie :</label><input type="text" name="biographie" id="biographie" /><br /><br />
+                        <label style="float:left;width:190px;" for="embleme">Emblème :</label><input type="text" name="embleme" id="embleme" /><br /><br />
+			<label style="float:left;width:190px;" for="armes">Armes :</label><input type="text" name="armes" id="armes" /><br /><br />
+			<label style="float:left;width:190px;" for="cimiers">Ornements extérieurs :</label><input type="text" name="cimiers" id="cimiers" /><br /><br />
+			<label style="float:left;width:190px;" for="notes">Notes :</label><input type="text" name="notes" id="notes" /><br /><br />
+                        <label style="float:left;width:190px;" for="devise">Devise/Légende :</label><input type="text" name="devise" id="devise" /><br /><br />
+			<label style="float:left;width:190px;" for="bibliographie">Bibliographie :</label><input type="text" name="bibliographie" id="bibliographie" /><br /><br />
+			<label style="float:left;width:190px;" for="auteurs">Auteur(s) :</label><input type="text" name="auteurs" id="auteurs" /><br /><br />
+			<label style="float:left;width:190px;" for="titre">Titre :</label><input type="text" name="titre" id="titre" /><br /><br />
+			<label style="float:left;width:190px;" for="lieu_edition">Lieu d'édition :</label><input type="text" name="lieu_edition" id="lieu_edition" /><br /><br />
+			<label style="float:left;width:190px;" for="editeur">Editeur :</label><input type="text" name="editeur" id="editeur" /><br /><br />
+			<label style="float:left;width:190px;" for="annee_edition">Année d'édition :</label><input type="text" name="annee_edition" id="annee_edition" /><br /><br />
+			<label style="float:left;width:190px;" for="reliure">Reliure :</label><input type="text" name="reliure" id="reliure" /><br /><br />
+			<label style="float:left;width:190px;" for="provenance">Provenance :</label><input type="text" name="provenance" id="provenance" /><br /><br />
+			<label style="float:left;width:190px;" for="site">Site :</label><input type="text" name="site" id="site" /><br /><br />
+			<label style="float:left;width:190px;" for="section">Section :</label><input type="text" name="section" id="section" /><br /><br />
+                        <label style="float:left;width:190px;" for="cote">Cote :</label><input type="text" name="cote" id="cote" /><br /><br />
+                        <label style="float:left;width:190px;" for="folio_emplacement">Folio ou emplacement :</label><input type="text" name="folio_emplacement" id="folio_emplacement" /><br /><br />
+			<input type="submit" name="submit_ajout_manuel" value="Ajouter" />
+		</div>
+		</form>
+                <?php }
+                else{
+                    echo $manuel;
+                ?>
+                <h4><a href="javascript:history.back()"><<< Retour sur le formulaire </a></h4>
+                <?php
+                }
+                ?>
+                </div>
+</fieldset>
+
+
+<?php }else{ ?>
+<!-- Si l'admin n'est pas connect� on le renvoit sur la page identification -->
+<center><h3>Administration</h3></center>
+
+<?php header("Location: ".base_url().'administration/identification'); ?>
+
+<?php } ?>
+<div id="fiche" title="Modification des informations"></div> <!--Div pour l'affichage de la fiche de modif -->

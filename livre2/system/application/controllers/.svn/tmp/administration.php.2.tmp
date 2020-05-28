@@ -1,0 +1,563 @@
+<?php
+class Administration extends Controller {
+	
+	function index($lettre='', $id=''){
+		
+		set_time_limit(0); //On supprime la limite d'ex�cution du script pour qu'il ne s'arrete pas en plein mileu
+		
+                // Chargement des models utilis�s dans le controller (les models sont dans le dossiers /system/application/models )
+		$this->load->model('Model_administration');	
+		$this->load->model('Model_recherche');
+
+		$this->load->library('pagination'); //Chargement de la librarie de pagination
+		/*
+		|----------------------------------------------------------------------------------------------------
+		| Bouton de D�connexion qui met la variable $session = FALSE (cad non connect�)			
+		|----------------------------------------------------------------------------------------------------
+		*/
+			$session = $this->session->userdata('logged_in');	// $session=TRUE (admin est connect�) ou $session=FALSE (admin est pas connect�)
+			if (isset($_POST['deconnexion']) && $_POST['deconnexion'] == 'Deconnexion') {
+				$newdata = array(
+					'logged_in' => FALSE,
+					'statut' => NULL
+				);
+				$this->session->set_userdata($newdata); 
+				$session = $this->session->userdata('logged_in');	// $session = FALSE
+				
+				header("Location: ".base_url()); 	//redirection sur l'accueil		
+			}
+		/*
+		|----------------------------------------------------------------------------------------------------
+		*/	
+
+		/*
+		|---------------------------------------------------------------------------------------------------
+		| Traitement pour le changement des codes d'accés
+		|---------------------------------------------------------------------------------------------------
+		*/
+			$acces = "";
+			
+			$identifiants = $this->Model_administration->identifiant();
+			
+			foreach ($identifiants as $row)
+			{
+				$login = $row->login;
+				$mdp = $row-> password;
+			}
+						
+			if(isset($_POST['login']) && isset($_POST['mdp_actuel'])) //Lorsqu'on a rempli le 1er formulaire (avec les identifiants actuels)
+			{
+				if($_POST['login']=='' || $_POST['mdp_actuel']=='')
+				{
+					$acces = "Veuillez remplir toutes les cases!"; 
+				}
+				else
+				{
+					if($_POST['login']==$login && $_POST['mdp_actuel']==$mdp)
+						$acces = "true";
+					else
+						$acces = "Les identifiants sont incorrects";
+				}
+			}
+			else if(isset($_POST['new_mdp']) && isset($_POST['new_mdp_bis'])) //Lorsqu'on a rempli le 2e formulaire (avec le nouveau mot de passe)
+			{
+				if($_POST['new_mdp']=='' || $_POST['new_mdp_bis']=='')
+				{
+					$acces = "Veuillez remplir toutes les cases!"; 
+				}
+				else
+				{
+					if($_POST['new_mdp']!=$_POST['new_mdp_bis'])
+						$acces = "Les deux ne correspondent pas!";
+					else
+					{
+						$mdp = $_POST['new_mdp'];
+						$this->Model_administration->modif_mdp($mdp);
+						
+						$acces = "Le mot de passe a bien été changé!";
+					}
+				}
+			}
+		
+		/*
+		|----------------------------------------------------------------------------------------------------
+		*/
+		
+		/*
+		|---------------------------------------------------------------------------------------------------
+		| Traitement des fichiers upload�s
+		|---------------------------------------------------------------------------------------------------
+		*/
+			$transfert = "";
+			$nom = "";
+			
+			if(isset($_FILES['mediatheque'])) //Si on upload un fichier pour la m�diatheque
+			{
+				if($_FILES['mediatheque']['name']=="")
+				{
+					$transfert = "Vous n'avez choisi aucun fichier!";
+				}
+				else
+				{
+					$resultat = $this->xls_csv('mediatheque'); //On cr�e un fichier csv a partir du fichier upload�
+					$transfert = $resultat['transfert'];
+					$nom = $resultat['nom'];
+					$liste = 'pays, region, departement, commune, edifice_conservation, denomination, categorie, materiau, ref_reproduction, auteur_cliche, annee_cliche, photo, ref_im, ref_pa, ref_ia, patronyme, individu, biographie, embleme, armes, cimiers, devise, notes, bibliographie, auteurs, titre, lieu_edition, editeur, annee_edition, reliure, provenance, site, section, cote, folio_emplacement ';
+					$this->Model_administration->mise_a_jour($_SERVER['DOCUMENT_ROOT'].'/fichiers_tmp/'.$nom,'details',$liste); //On insert les infos contenues ds le fichier xls dans la bdd
+				
+					//Suppression des fichiers excel upload�s
+					$repertoire = opendir($_SERVER['DOCUMENT_ROOT'].'/fichiers_tmp/');
+					$fichier_csv = $_SERVER['DOCUMENT_ROOT'].'/fichiers_tmp/'.$nom;
+					$fichier_xls = explode('.',$nom);
+					$fichier_xls = $_SERVER['DOCUMENT_ROOT'].'/fichiers_tmp/'.$fichier_xls[0].'.xls';
+					unlink($fichier_csv);
+					unlink($fichier_xls);
+					closedir($repertoire);
+				}
+			}
+			else if(isset($_FILES['images'])) //Si on upload un fichier pour les images
+			{
+				if($_FILES['images']['name']=="")
+			{
+					$transfert = "Vous n'avez choisi aucun fichier!";
+				}
+				else
+				  {
+					$transfert = $this->insertion_images();
+					$transfert = $this->compression();
+				}
+			}
+	
+		/*
+		|---------------------------------------------------------------------------------------------------------
+		*/
+		
+		/*
+		|---------------------------------------------------------------------------------------------------
+		| Traitement pour l'affichage de la partie modification des donn�es de la base
+		|---------------------------------------------------------------------------------------------------
+		*/
+                        if($lettre!=''){
+                            $donnees_photos = $this->Model_administration->affichage_table('details',$lettre);
+                        }
+			else{
+                            $donnees_photos = $this->Model_administration->affichage_table('details','a'); //requete pour r�cup�rer ttes les donn�es de la table 'legende/photos'
+                        }
+                        $donnees_photos = $donnees_photos->result_array();
+		
+		/*
+		|---------------------------------------------------------------------------------------------------------
+		*/
+
+                /*
+		|---------------------------------------------------------------------------------------------------
+		| Traitement pour l'ajout manuel d'un contenu
+		|---------------------------------------------------------------------------------------------------
+		*/
+                        $manuel = "";
+                        $booleen_manuel = "";
+
+                        if(isset($_POST['submit_ajout_manuel'])){
+
+                            if($_FILES['images']['name']=="" && $_POST['patronyme']=="" && $_POST['pays']=="" &&
+                                    $_POST['region']=="" && $_POST['departement']=="" && $_POST['commune']=="" &&
+                                    $_POST['edifice_conservation']=="" && $_POST['denomination']=="" && $_POST['materiau']=="" &&
+                                    $_POST['ref_reproduction']=="" && $_POST['auteur_cliche']=="" && $_POST['type_cliche']=="" &&
+                                    $_POST['annee_cliche']=="" && $_POST['photo']=="" && $_POST['ref_im']=="" && $_POST['ref_pa']=="" &&
+                                    $_POST['ref_ia']=="" && $_POST['individu']=="" && $_POST['biographie']=="" && $_POST['embleme']=="" &&
+                                    $_POST['armes']=="" && $_POST['cimiers']=="" && $_POST['devise']=="" && $_POST['bibliographie']=="" &&
+                                    $_POST['auteurs']=="" && $_POST['titre']=="" && $_POST['categorie']=="" &&
+                                    $_POST['lieu_edition']=="" && $_POST['editeur']=="" && $_POST['annee_edition']=="" && $_POST['reliure']=="" &&
+                                    $_POST['provenance']=="" && $_POST['site']=="" && $_POST['section']=="" && $_POST['cote']=="" &&
+                                    $_POST['folio_emplacement']==""
+                               )
+                            {
+
+                                $manuel = "Veuillez remplir au moins une case!";
+                                $booleen_manuel = true;
+
+                        }
+                        else{
+               		    $libelle_image_tab = explode(".",$_FILES['images']['name']);
+			    $libelle_image = $libelle_image_tab[0];
+
+                            $patronyme = $_POST['patronyme'];
+                            $pays = $_POST['pays'];
+                            $region = $_POST['region'];
+                            $departement = $_POST['departement'];
+                            $commune = $_POST['commune'];
+                            $edifice_conservation = $_POST['edifice_conservation'];
+                            $denomination = $_POST['denomination'];
+                            $categorie = $_POST['categorie'];
+                            $materiau = $_POST['materiau'];
+                            $ref_reproduction = $_POST['ref_reproduction'];
+                            $auteur_cliche = $_POST['auteur_cliche'];
+                            $type_cliche = $_POST['type_cliche'];
+                            $annee_cliche = $_POST['annee_cliche'];
+                            $photo = $_POST['photo'];
+                            $ref_im = $_POST['ref_im'];
+                            $ref_pa = $_POST['ref_pa'];
+                            $ref_ia = $_POST['ref_ia'];
+                            $individu = $_POST['individu'];
+                            $biographie = $_POST['biographie'];
+                            $embleme = $_POST['embleme'];
+                            $armes = $_POST['armes'];
+                            $cimiers = $_POST['cimiers'];
+                            $devise = $_POST['devise'];
+                            $notes = $_POST['notes'];
+                            $bibliographie = $_POST['bibliographie'];
+                            $auteurs = $_POST['auteurs'];
+                            $titre = $_POST['titre'];
+                            $lieu_edition = $_POST['lieu_edition'];
+                            $editeur = $_POST['editeur'];
+                            $annee_edition = $_POST['annee_edition'];
+                            $reliure = $_POST['reliure'];
+                            $provenance = $_POST['provenance'];
+                            $site = $_POST['site'];
+                            $section = $_POST['section'];
+                            $cote = $_POST['cote'];
+                            $folio_emplacement = $_POST['folio_emplacement'];
+
+                            $this->db->query("INSERT INTO details VALUES('','$libelle_image','$patronyme','$auteur_cliche', '$type_cliche', '$annee_cliche',
+                                            '$pays','$region', '$departement', '$commune', '$edifice_conservation', '$photo', '$ref_im', '$ref_pa', '$ref_ia',
+                                            '$individu', '$biographie', '', '$denomination', '$titre', '$categorie', '$materiau', '$ref_reproduction', '$bibliographie',
+                                            '$embleme', '$auteurs', '$lieu_edition', '$editeur', '$annee_edition', '$reliure', '$provenance', '$site', '$section', '$cote',
+                                            '$folio_emplacement', '$cimiers', '$armes', '$notes', '$devise')");
+
+                            $manuel = "L'ajout a bien été effectué";
+                            $booleen_manuel = true;
+                        }
+                        }
+
+                 /*
+		|---------------------------------------------------------------------------------------------------------
+		*/
+
+                /*
+		|---------------------------------------------------------------------------------------------------
+		| Traitement de la suppression d'un contenu
+		|---------------------------------------------------------------------------------------------------
+		*/
+
+                    if($id!=''){
+                        $this->suppr($id);
+                    }
+                 /*
+		|---------------------------------------------------------------------------------------------------------
+		*/
+		
+		
+
+// Tableau $data des variables � envoyer aux vues			
+		$data = array(
+			'connecte' => $session, // La variable $connecte est utilis� dans la vue footer.php
+                        'manuel' => $manuel,
+                        'booleen_manuel' => $booleen_manuel,
+			'acces' => $acces,			
+			'transfert' => $transfert,
+			'donnees_photos' => $donnees_photos
+			/*'pages_photos' => $pages_photos*/
+		);
+
+// Chargement des views � afficher (attention � l'ordre) (les views sont dans le dossiers /system/application/views )	
+		$this->load->view('layout/header',$data);	
+		$this->load->view('administration/administration',$data);
+		$this->load->view('layout/footer',$data);	
+		
+	}
+
+	function identification (){
+
+// Chargement des models utilis�s dans le controller (les models sont dans le dossiers /system/application/models )
+		$this->load->model('Model_administration');	
+	
+		/*
+		|----------------------------------------------------------------------------------------------------
+		| Bouton de D�connexion (voir vue footer.php) qui met la variable $session = FALSE (cad non connect�)			
+		|----------------------------------------------------------------------------------------------------
+		*/
+			$session = $this->session->userdata('logged_in');	// $session=TRUE (admin est connect�) ou $session=FALSE (admin est pas connect�)
+			if (isset($_POST['deconnexion']) && $_POST['deconnexion'] == 'Deconnexion') {
+				$newdata = array(
+					'logged_in' => FALSE,
+					'statut' => NULL
+				);
+				$this->session->set_userdata($newdata); 
+				$session = $this->session->userdata('logged_in');	// $session = FALSE
+				header("Location: ".base_url()); 	//redirection sur l'accueil		
+			}
+		/*
+		|----------------------------------------------------------------------------------------------------
+		*/
+		/*
+		|----------------------------------------------------------------------------------------------------
+		| Formulaire de Connexion (voir vue identification.php) qui met la variable $session = TRUE (cad connect�)			
+		|----------------------------------------------------------------------------------------------------
+		*/	
+		$error= NULL; // $error contiendra le message d'erreur d'identification 	
+		$identifiants = $this->Model_administration->identifiant();		// $identifiants : tous les identifiants enregistr�s dans la bdd 	
+		//Initialisation des variables							
+		$newdata = array( // Variable de session (par d�faut l'admin est pas connect� donc FALSE)
+			'logged_in' => FALSE,
+			'statut' => NULL
+		);
+		$this->session->set_userdata($newdata);	
+			
+			if (isset($_POST['connexion']) && $_POST['connexion'] == 'Connexion') { // on v�rifie que le formulaire a �t� envoy�
+				if ((isset($_POST['login']) && !empty($_POST['login'])) && (isset($_POST['pass']) && !empty($_POST['pass']))) {
+					foreach ($identifiants as $identifiant) {	// on compare les identifiants envoy�s avec ceux de la bdd
+						if (($identifiant->login == $_POST['login'] ) && ($identifiant->password == $_POST['pass'])) { // si les identifiants sont correctes, la variable de session logged_in passe � TRUE
+							$newdata = array(
+							   'logged_in' => TRUE,
+							   'statut' => $identifiant->statut, 
+						   );
+							$this->session->set_userdata($newdata); 
+							$session = $this->session->userdata('logged_in'); // $session = TRUE (l'admin est connect�)
+							header("Location: ".base_url()); // redirection vers la page d'administration
+						}
+					}
+					$error='<div class="error"><strong>Identifiants incorrects</strong></div>';		
+				}
+				else {
+					$error='<div class="error"><strong>Identifiants incorrects</strong></div>';			
+				}				
+			}
+		/*
+		|----------------------------------------------------------------------------------------------------
+		*/
+			
+// Tableau $data des variables � envoyer aux vues			
+		$data = array(
+			'connecte' => $session, // La variable $connecte est utilis�e dans la vue footer.php et administration.php (et toutes les autres vues o� on a besoin de savoir si l'admin est connect� ou pas)
+			'error' => $error, // La variable $error est utilis�e dans la vue identification.php 
+		);
+		
+// Chargement des views � afficher (attention � l'ordre) (les views sont dans le dossiers /system/application/views )	
+		//$this->load->view('layout/header',$data);	
+		$this->load->view('administration/identification',$data);
+		//$this->load->view('layout/footer',$data);	
+	}
+function utilisateur(){
+
+// Chargement des models utilis�s dans le controller (les models sont dans le dossiers /system/application/models )
+		$this->load->model('Model_administration');	
+	
+		/*
+		|----------------------------------------------------------------------------------------------------
+		| Bouton de D�connexion (voir vue footer.php) qui met la variable $session = FALSE (cad non connect�)			
+		|----------------------------------------------------------------------------------------------------
+		*/
+			$session = $this->session->userdata('logged_in');	// $session=TRUE (admin est connect�) ou $session=FALSE (admin est pas connect�)
+			if (isset($_POST['deconnexion']) && $_POST['deconnexion'] == 'Deconnexion') {
+				$newdata = array(
+					'logged_in' => FALSE,
+					'statut' => NULL
+				);
+				$this->session->set_userdata($newdata); 
+				$session = $this->session->userdata('logged_in');	// $session = FALSE
+				header("Location: ".base_url()); 	//redirection sur l'accueil		
+			}
+		/*
+		|----------------------------------------------------------------------------------------------------
+		*/
+	
+		
+// Tableau $data des variables � envoyer aux vues			
+		$data = array(
+			'connecte' => $session, // La variable $connecte est utilis�e dans la vue footer.php et administration.php (et toutes les autres vues o� on a besoin de savoir si l'admin est connect� ou pas)
+			'error' => $error,
+			'transfert' => $transfert,
+		);
+		
+// Chargement des views � afficher (attention � l'ordre) (les views sont dans le dossiers /system/application/views )	
+		$this->load->view('layout/header',$data);	
+		$this->load->view('administration/utilisateur',$data);
+		$this->load->view('layout/footer',$data);	
+	}
+	
+function xls_csv($index)
+{
+	$transfert = "";
+	$nom = "";
+			
+			
+				if ($_FILES[$index]['error'] > 0)
+				{
+					$transfert =  "Erreur lors du transfert";
+				}
+				else
+				{
+					$extension_upload = strtolower(  substr(  strrchr($_FILES[$index]['name'], '.')  ,1)  );
+					if($extension_upload!='xls')
+					{
+						$transfert = "Le fichier n'est pas au format excel";
+					}
+					else
+					{
+						$nom = $_SERVER['DOCUMENT_ROOT']."/fichiers_tmp/".$_FILES[$index]['name'];
+						$resultat = move_uploaded_file($_FILES[$index]['tmp_name'],$nom);
+						
+						if($resultat)
+						{
+							$transfert = htmlentities("Transfert r�ussi");
+							
+							Include($_SERVER['DOCUMENT_ROOT'].'/../Excel/reader.php'); //Inclusion de la bliblio de traitemt de fichiers excel
+
+							$donnees = "";
+ 
+							// Instanciation de la class permettant la lecture du fichier excel
+							$data = new Spreadsheet_Excel_Reader();
+ 
+							// D�finition du type d�encodage de caract�re � utiliser pour la sortie (ce qui va �tre affich� � l��cran)
+							$data->setOutputEncoding('UTF-8');
+ 
+							// Chargement du fichier excel � lire
+							$data->read($nom);
+ 
+							error_reporting(0);
+ 
+							// Parse l�int�gralit� du fichier excel
+							for ($i = 1; $i <= $data->sheets[0]['numRows']; $i++) {
+								for ($j = 1; $j <= $data->sheets[0]['numCols']; $j++) {
+									$donnees.=$data->sheets[0]['cells'][$i][$j]."\t";
+								}
+								$donnees.="\r";
+							}
+
+							utf8_encode($donnees);
+							
+							$nom = explode(".",$_FILES[$index]['name']);
+							$nom_csv = $nom[0].".csv";
+							$nom = $_SERVER['DOCUMENT_ROOT']."/fichiers_tmp/".$nom_csv;
+
+							$fichier = fopen($nom,"w+");
+							fputs($fichier,$donnees);
+							fclose($fichier);
+							
+							$transfert = "Mise a jour reussie!";
+						}
+						else 
+						{
+							$transfert = "Echec du transfert";
+						}
+					}
+				}
+			
+	
+	$data = array(
+				'transfert' => $transfert,
+				'nom' => $nom_csv,
+				);
+	
+	return $data;
+}
+
+function insertion_images() //Fonction qui enregistre les images ds le dossier temporaire
+{
+	$transfert = "";
+	
+		if ($_FILES['images']['error'] > 0)
+		{
+			$transfert =  "Erreur lors du transfert";
+		}
+		else
+		{
+			$extension_upload = strtolower(  substr(  strrchr($_FILES['images']['name'], '.')  ,1)  );
+			if($extension_upload!='jpg' && $extension_upload!='JPG' && $extension_upload!='jpeg' && $extension_upload!='png' && $extension_upload!='JPEG' && $extension_upload!='zip')
+			{
+				$transfert = "Le fichier n'est pas au bon format";
+			}
+			else
+			{
+				//On copie le fichier
+				$nom = $_SERVER['DOCUMENT_ROOT']."/fichiers_tmp/".$_FILES['images']['name'];
+				$resultat = move_uploaded_file($_FILES['images']['tmp_name'],$nom);
+				
+				if($extension_upload=='zip') //Si c'est une archive
+				{
+					require_once( $_SERVER['DOCUMENT_ROOT'].'/../system/libraries/pclzip.lib.php');
+					$archive = new PclZip($nom); //on cr�e un nouvel objet archive a partir su fichier upload�
+					
+					if ($archive->extract($_SERVER['DOCUMENT_ROOT'].'/fichiers_tmp/') == 0) //on extrait ds le dossier sp�cifi�
+					{
+						die("Error : ".$archive->errorInfo(true));
+					}
+					else //Si l'extraction c'est bien pass�e
+					{
+						$dirname = $_SERVER['DOCUMENT_ROOT'].'/fichiers_tmp/'; 
+						$dir = opendir($dirname); //On ouvre le dossier des fichiers temporaires
+						unlink($nom); //On supprime l'archive
+						
+						$dossier = explode(".",$_FILES['images']['name']);
+						$dossier = $_SERVER['DOCUMENT_ROOT'].'/fichiers_tmp/'.$dossier[0].'/'; 
+						$dir = opendir($dossier); //On ouvre le dossier issu de l'extraction
+						
+						while($file = readdir($dir)) 
+						{
+							if($file != '.' && $file != '..' && !is_dir($dossier.$file))
+							{
+								copy($dossier.$file, $_SERVER['DOCUMENT_ROOT'].'/fichiers_tmp/'.$file); //On d�place tous les fichiers
+								unlink($dossier.$file); //On les supprime du dossier
+							}
+						}
+						
+						rmdir($dossier); //On supprime le dossier issu de l'extraction
+						
+						closedir($dir);
+					}
+				}
+				
+			}
+		}
+	
+	return $transfert;
+}
+
+function compression() //Fonction qui compresse les images du dossier temporaire et les d�place ds le fichier "images"
+{
+
+	error_reporting(E_ERROR | E_WARNING | E_PARSE | E_NOTICE);
+	$dirname = $_SERVER['DOCUMENT_ROOT'].'/fichiers_tmp/';
+	$dir = opendir($dirname); //On ouvre le dossier temporaire
+	
+	$transfert = "";
+	
+	while($file = readdir($dir)) //On parcourt les fichiers
+	{
+		if($file != '.' && $file != '..' && !is_dir($dirname.$file))
+		{
+			$titre = explode(".",$file);
+
+			// montagne.jpg : $titre[0] = montagne, $titre[1] = jpg
+
+			//On configure les param�tres pour la compression
+			$config['image_library'] = 'GD';
+			$config['source_image'] = $dirname.$file; //Le fichier source
+			$config['quality'] = '75%'; //La qualit� du fichier apr�s compression
+			$config['new_image'] = $_SERVER['DOCUMENT_ROOT'].'/../ressources/images/'.$titre[0].".jpg"; //Le nouveau fichier
+
+			$this->load->library('image_lib'); //On charge les fonctions image de CodeIgniter
+			$this->image_lib->initialize($config);
+			$this->image_lib->resize(); //On lance la compression
+			if ( ! $this->image_lib->resize())
+
+			  $transfert = "";
+			  //				$transfert = "Une erreur s'est produite!";
+			else
+			  $transfert = "";
+			  //	$transfert = "Photo(s) charg&eacute;e(s)";
+			
+			//			unlink($dirname.$file); //On supprime les images du dossier temporaire
+		}
+	}
+	return $transfert;
+}
+
+function suppr($id){ //fonction pour supprimer un contenu du tableau
+
+    $this->db->query("DELETE FROM details WHERE id='".$id."'");
+
+}
+
+}
+?>

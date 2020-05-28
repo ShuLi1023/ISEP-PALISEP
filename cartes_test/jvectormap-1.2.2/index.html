@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>jVectorMap demo</title>
+  <link rel="stylesheet" href="jquery-jvectormap-1.2.2.css" type="text/css" media="screen"/>
+  <script src="http://ajax.googleapis.com/ajax/libs/jquery/2.1.0/jquery.min.js"></script>
+  
+  <script src="jquery-jvectormap-1.2.2.min.js"></script>
+  <script src="http://jvectormap.com/js/jquery-jvectormap-fr-merc-en.js"></script>
+  <script src="europe-map.js"></script>
+</head>
+<body>
+  <div id="map" style="width: 600px; height: 600px"></div>
+  <script>
+    $(function(){
+      var message = "";
+
+      var map = $('#map').vectorMap({
+        get: 'map',
+        map: 'europe_merc_en',
+        regionsSelectable: true,
+        markersSelectable: true,
+        zoomOnScroll: false,
+        regionStyle: {
+          initial: {
+            fill: '#B8E186'
+          },
+          selected: {
+            fill: '#F4A582'
+          }
+        },
+        onRegionSelected: function(){
+          if (window.localStorage) {
+            window.localStorage.setItem(
+              'jvectormap-selected-regions',
+              JSON.stringify(map.getSelectedRegions())
+            );
+          }
+        },
+        onRegionClick: function(element, code, region)
+        {
+            // var message = '';
+            // // alert(message);
+            // $("#map path").each(function (index){
+            //   if($(this).data('fill') == "#F4A582"){
+            //     message = code + ", ";
+            //   }
+            // });            
+
+            if( message.indexOf( code ) == -1 ){
+              message += code + " ";
+            } else { // pays deja present
+              message = message.replace(code, '');
+            }
+
+            alert(message);
+        }
+      });
+      map.setSelectedRegions( JSON.parse( window.localStorage.getItem('jvectormap-selected-regions') || '[]' ) );
+
+    });
+  </script>
+</body>
+</html>

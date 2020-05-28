@@ -1,0 +1,60 @@
+--> Framework utilisé : CodeIgniter 
+	-> Site Fr : http://codeigniter.fr/
+	-> Site anglais : http://codeigniter.com/
+	-> Doc Fr : http://www.codeigniter.fr/user_guide/
+	-> Doc anglais : http://codeigniter.com/user_guide/
+
+--> Penser à activer la réécriture d'URL sur le serveur apache si les pages ne s'affichent pas 
+
+--> Résumé du fonctionnement de la framework :
+	-> Fichier caché .htaccess (dans le même dossier que les dossiers /sytem et /ressources) qui permet de supprimer index.php de l'url et que le fichier.css (ou l'appel des images ...) soit bien pris en compte
+	-> Dossier /ressources
+		-> /css : contient les fichiers et dossiers du template css utilisé
+		-> /images : toutes les images dont on a besoin ... ( ça pourra contenir plus tard les photos des blasons ?)
+		-> /lightbox : dossier qui contient la visionneuse flash pour agrandir les images  (plus d'infos sur http://www.huddletogether.com/projects/lightbox2/ )
+	-> Dossier /system (il y a pleins de dossiers mais seul le dossier /application est utilisé, les autres on n'y touche pas du tout)
+		-> /application
+
+		-> /cache
+		-> /codeigniter
+		-> /database
+		-> /fonts
+		-> /helpers
+		-> /language
+		-> /librairies
+		-> /logs
+		-> /plugins
+		-> /scaffolding
+
+	-> Dossier system/application (le plus important !)
+		-> /config  : contient les fichiers de config du framework (détail de leur utilité sur la doc_user de codeigniter)
+			-> config.php : modification de base_url (actuellement /palisep/, c'est le nom du dossier que je vous ai envoyé donc si vous modifiez le nom du dossier, il faut aussi modifier base_url)
+				-> http://localhost/palisep/ (c'est le dernier segment de l'url)			
+			-> Pour connecter une base de données : modifier le fichier database.php
+			-> autoload.php : chargement automatique de fichiers (plus besoin de les charger dans le controller)
+			-> J'ai mis la page accueil par défaut cad que c'est le controller accueil qui est appelé par défaut (pour changer ça : modifier le fichier routes.php)
+		-> /controllers 
+			-> pas de code html dans ces fichiers.php
+			-> Les controllers peuvent demander l'affichage d'une vue et appeler des models
+		-> /models
+			-> ces fichiers.php contiennent généralement les fonctions de requetes SQL (syntaxe dispo sur la doc codeigniter, ex avec model admin.php)
+		-> /views
+			->contient ts les fichiers.php d'affichage des données, tout le code html, les vues peuvent etre classées en sous-dossiers
+
+	-> les autres dossiers suivant sont surement utiles mais on ne s'en sert pas, en tout cas pour l'instant
+		-> /errors 
+		-> /helpers : 
+		-> /hooks :
+		-> /language : 
+		-> /librairies :
+
+			
+Rapide explication de l'architecture MVC de la framework
+Dans une url, on appelle par exemple le controller galerie (http://localhost/palisep/galerie  -> c'est le dernier segment de l'url)
+Le controller galerie va charger 3 vues (header, galerie, footer) (voir le fichier galerie.php dans le dossier /controllers, les vues sont contenues dans le dossier /views)
+	
+
+	
+
+			
+		

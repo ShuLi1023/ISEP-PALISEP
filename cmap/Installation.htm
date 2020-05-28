@@ -1,0 +1,168 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<title>GUIDE D'INSTALLATION CMAP</title>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+<style type="text/css">
+<!--
+Body {
+	font-family: Verdana, Arial, Helvetica, sans-serif;
+	font-size: 12px;
+	color: #333333;
+	line-height: 20px;
+}
+li {
+	line-height: 20px;
+
+}
+code {
+	font-size: 12px;
+	color: #003399;
+
+}
+-->
+</style>
+</head>
+
+<body>
+<h3>INSTALLATION DE CMAP Carte de France PHP</h3>
+<p><a href="Page-test.php">Page-test</a> | <a href="#examples">Exemples</a> | 
+  <a href="#versions">Autres versions</a> </p>
+<ol>
+  <li>Dézippez le fichier France-free.zip à la racine de votre serveur.<br>
+    <br>
+  </li>
+  <li>Un dossier appel&eacute; &quot;<strong>cmap</strong>&quot; doit appara&icirc;tre 
+    avec &agrave; l'int&eacute;rieur :<br>
+    <br>
+    - Un fichier <strong>Installation.htm</strong><br>
+    - Un fichier <strong>france_free.swf<br>
+    - </strong>Un fichier <strong>map.php</strong><br>
+    <br>
+    - un fichier<strong> Page-test.php</strong> vous permettra de tester le fonctionnement 
+    de la carte.<br>
+    <br>
+  </li>
+  <li>Vous pouvez installer les fichiers france-free.swf et map.php o&ugrave; 
+    bon vous semble sur votre serveur<br>
+    du moment que vous respectez le chemin relatif vers <em></em> la carte.<br>
+    <br>
+  </li>
+  <li>Editez les diff&eacute;rentes variables de configuration de la carte selon 
+    vos besoins ( <a href="#config">voir plus bas</a> )<br>
+    <br>
+  </li>
+  <li>Copiez - collez ce code dans votre page :<br>
+    <br>
+    <p><strong>&lt;?PHP<br>
+      </strong> include(&quot;map.php&quot;);<br>
+      <strong>?&gt;</strong> </p>
+    Si vous avez plac&eacute; le fichier map.php dans un sous repertoire, indiquez 
+    le chemin relatif jusqu'&agrave; ce repertoire.<br>
+    Exemple : <code>include(&quot;cartes/france/map.php&quot;);</code><br>
+    <br>
+  </li>
+</ol>
+<p>RENVOI DYNAMIQUE: la variable qui permet d'afficher les d&eacute;partements 
+  sur la carte s'appelle &quot;dpt&quot;;<br>
+  Votre page doit donc recevoir cette variable une fois la carte cliqu&eacute;e; 
+  m&eacute;thode $_GET.<br>
+  Voir code source de Page-test.php</p>
+<p><br>
+</p><a name="config"></a>
+<h3>CONFIGURATION DE CMAP Carte de france</h3>
+<p>&nbsp;</p>
+<ul>
+  <p><br>
+    Pour installer la carte sur une de vos pages, copiez-collez ce script : <br>
+    <br>
+    <strong><code>&lt;?PHP</code></strong></p>
+  <p><code>include(&quot;map.php&quot;);</code></p>
+  <p><code><strong>?&gt;</strong> </code></p>
+  <p>Vous pouvez ajouter &agrave; ce script diff&eacute;rentes variables de configuration 
+    selon vos besoin :<br>
+    NOTA : Si aucune de ces variables n'est pr&eacute;cis&eacute;e, la carte fonctionnera 
+    avec ses propres param&egrave;tres par d&eacute;faut.<br>
+    Vous pouvez utiliser ces variables ind&eacute;pendemment, c'est &agrave; dire 
+    pr&eacute;ciser une, deux, trois... ou toutes.</p>
+  <p><strong>$SIZE_MAP</strong>=&quot;600&quot;;<br>
+    D&eacute;finit la taille d'affichage de la carte en pixels.<br>
+    Par d&eacute;faut, la taille de la carte est de 450 x 450 pixels.</p>
+  <p><strong>$DIR_MAP</strong>=&quot;&quot;;<br>
+    Indique l'emplacement ( chemin relatif ) du fichier France-free.swf au cas 
+    o&ugrave; vous mettiez celui-ci dans un sous-repertoire.<br>
+    Exemple : <code>$DIR_MAP=&quot;carte/france/&quot;;</code><br>
+    Note : Mettre un slash &agrave; la fin.</p>
+  <br>
+  <p> <strong>$URL_REDIR</strong>=&quot;Ma-page.php&quot;;<br>
+    D&eacute;finit la page de redirection dynamique de la carte et qui re&ccedil;oit 
+    la variable 'dpt=<em>XX</em>' renvoy&eacute;e par la carte.<br>
+    Exemple : Ma-page.php<br>
+    Si vous n'avez renseign&eacute; aucune page , c'est la page Page-test.php 
+    qui prend le relai.</p>
+  <p><br>
+    <strong>$URL_TARGET</strong>=&quot;_self&quot;;<br>
+    definit le mode d'ouverture des pages : _blank , _self , _parent , _top . 
+  </p>
+  <p><br>
+    <strong>$CODE</strong>=&quot;XX&quot;;<br>
+    Renvoi &agrave; la carte la valeur de la variable '$dpt', et colore le d&eacute;partement 
+    ainsi pr&eacute;cis&eacute;.<br>
+    Exemple : <code>$CODE=$_GET['dpt'];</code></p>
+  <p><br>
+    <strong>$ROLL_BT</strong>=&quot;#FF0066&quot;;<br>
+    D&eacute;finit la couleur hexad&eacute;cimale des boutons au survol de la 
+    souris. </p>
+  <p><br>
+    <strong>$PRES_BT</strong>=&quot;#FF0000&quot;;<br>
+    D&eacute;finit la couleur hexad&eacute;cimale du d&eacute;partement actif. 
+  </p>
+  <p><br>
+    <strong>$BG_COLOR</strong>=&quot;#FF0099&quot;;<br>
+    D&eacute;finit la couleur hexad&eacute;cimale de la carte.<br>
+    Exemple : #CCF099</p>
+  <p><br>
+    <strong>$BORDERS</strong>=&quot;yes&quot;;<br>
+    Affiche ou non les pays frontaliers en gris clair.<br>
+    &quot;yes&quot; ou &quot;no&quot;;</p>
+  <p><br>
+  <p>&nbsp;NOTE : ces variables doivent être placé avant l'appel INCLUDE </p>
+  <hr>
+  <br>
+</ul>
+<a name="examples"></a>
+<h3>EXEMPLES</h3> 
+<p><code>&lt;?PHP<br>
+  <br>
+  $SIZE_MAP=&quot;390&quot;; </code><code><br>
+  <strong>$URL_REDIR</strong>=&quot;carte-des-magasins.php&quot;; <br>
+  <strong>$ROLL_BT</strong>=&quot;#FF0066&quot;;<br>
+  <strong>$PRES_BT</strong>=&quot;#FE0933&quot;;<br>
+  <br>
+  include(&quot;map.php&quot;); <br>
+  ?&gt;</code></p>
+<p><br>
+</p>
+<a name="versions"></a>
+<h3>
+  AUTRES VERSIONS </h3>
+  <ul>
+  <h4>France multi-link PHP MySql</h4>
+Carte de France interactive avec base de données MySql des régions et départements et administration indépendante de chaque lien.<br>
+  <h4>France multi-link XML</h4>
+Carte de France interactive avec fichier XML des régions et départements et gestion indépendante de chaque lien.<br>
+</ul>
+
+
+
+
+
+
+
+<p>&nbsp; </p>
+<p>AIDE &amp; TUTORIAUX : <a href="http://www.comersis.com/help/" target="_blank">http://www.comersis.com/help/</a></p>
+<p> PLUS D'INFOS : <a href="mailto:info@comersis.com?subject=cmap%20installation">info@comersis.com</a></p>
+<p><br>
+</p>
+</body>
+</html>
