@@ -11,8 +11,8 @@
 |	http://example.com/
 |
 */
- //$config['base_url']	= "http://www.livre2.palisep.fr"; 
-$config['base_url']	= "http://localhost/palisep/admin/";
+ $config['base_url']	= "http://palisep.fr/admin/"; 
+//$config['base_url']	= "http://localhost/admin";
 /*
 |--------------------------------------------------------------------------
 | Index File
