@@ -296,8 +296,54 @@ class Administration extends Controller {
 					$transfert = $resultat['transfert'];
 					$nom = $resultat['nom'];
 					$liste = 'pays, region, departement, commune, edifice_conservation, denomination, categorie, materiau, ref_reproduction, auteur_cliche, annee_cliche, patronyme, individu, parente, biographie, armes, cimiers, devise, titre, auteurs, lieu_edition, editeur, annee_edition, reliure, provenance, site, section, cote, folio_emplacement, bibliographie, notes ';
-					$this->Model_administration->mise_a_jour($_SERVER['DOCUMENT_ROOT'].'/fichiers_tmp/'.$nom,'details',$liste); //On insert les infos contenues ds le fichier xls dans la bdd
+					
+					//$this->Model_administration->mise_a_jour($_SERVER['DOCUMENT_ROOT'].'/fichiers_tmp/'.$nom,'details',$liste); //On insert les infos contenues ds le fichier xls dans la bdd
 
+					$row = 1;
+					$handle = fopen($_SERVER['DOCUMENT_ROOT'].'/fichiers_tmp/'.$nom, "r");
+
+					  while (($data = fgetcsv($handle, 1000, ";")) !== FALSE) {
+					     $this->db->query("INSERT INTO details (libelle_image, patronyme, 
+					     										auteur_cliche, type_cliche, 
+					     										annee_cliche, pays, region, 
+					     										departement, commune, 
+					     										edifice_conservation, photo,
+					     										ref_im, ref_pa,
+					     										ref_ia, individu,
+					     										biographie, parente,
+					     										date, denomination,
+					     										titre, categorie, 
+					     										materiau, ref_reproduction,
+					     										bibliographie, embleme,
+					     										auteurs, lieu_edition,
+					     										editeur, annee_edition,
+					     										reliure, provenance,
+					     										site, section,
+					     										cote, folio_emplacement,
+					     										cimiers, armes,
+					     										notes, devise)
+					     										 VALUES
+					     										 ('', '".mysql_real_escape_string($data[11])."',
+					     										 '','',
+					     										 '', '".mysql_real_escape_string($data[0])."', '".mysql_real_escape_string($data[1])."',
+					     										 '".mysql_real_escape_string($data[2])."', '".mysql_real_escape_string($data[3])."',
+					     										 '".mysql_real_escape_string($data[4])."','',
+					     										 '' , '',
+					     										 '' , '".mysql_real_escape_string($data[12])."',
+					     										 '".mysql_real_escape_string($data[14])."', '".mysql_real_escape_string($data[13])."',
+					     										 '', '".mysql_real_escape_string($data[5])."',
+					     										 '".mysql_real_escape_string($data[18])."', '".mysql_real_escape_string($data[6])."',
+					     										 '".mysql_real_escape_string($data[7])."', '".mysql_real_escape_string($data[8])."',
+					     										 '".mysql_real_escape_string($data[29])."', '',
+					     										 '".mysql_real_escape_string($data[19])."', '".mysql_real_escape_string($data[20])."',
+					     										 '".mysql_real_escape_string($data[21])."', '".mysql_real_escape_string($data[22])."',
+					     										 '".mysql_real_escape_string($data[23])."', '".mysql_real_escape_string($data[24])."',
+					     										 '".mysql_real_escape_string($data[25])."', '".mysql_real_escape_string($data[26])."',
+					     										 '".mysql_real_escape_string($data[27])."', '".mysql_real_escape_string($data[28])."',
+					     										 '', '".mysql_real_escape_string($data[15])."',
+					     										 '".mysql_real_escape_string($data[30])."', '".mysql_real_escape_string($data[17])."')");
+					  }
+					  fclose($handle);	
 					//Suppression des fichiers excel upload�s
 					$repertoire = opendir($_SERVER['DOCUMENT_ROOT'].'/fichiers_tmp/');
 					$fichier_csv = $_SERVER['DOCUMENT_ROOT'].'/fichiers_tmp/'.$nom;
@@ -706,11 +752,11 @@ function xls_csv($index)
 							error_reporting(0);
 
 							// Parse l�int�gralit� du fichier excel
-							for ($i = 1; $i <= $data->sheets[0]['numRows']; $i++) {
+							for ($i = 2; $i <= $data->sheets[0]['numRows']; $i++) {
 								for ($j = 1; $j <= $data->sheets[0]['numCols']; $j++) {
-									$donnees.=$data->sheets[0]['cells'][$i][$j]."\t";
+									$donnees.=$data->sheets[0]['cells'][$i][$j].";";
 								}
-								$donnees.="\r";
+								$donnees.="\r\n";
 							}
 
 							utf8_encode($donnees);
