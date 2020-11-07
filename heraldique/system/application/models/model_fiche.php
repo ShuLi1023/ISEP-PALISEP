@@ -20,7 +20,7 @@ class Model_fiche extends Model{ // Le nom de la classe est le nom du model avec
 		$donnees = $this->db->query('
 			SELECT l.id,l.libellé_image,l.vedette_chandon
 			FROM legende_photos l
-			WHERE l.vedette_chandon="'.$patronyme.'"
+			WHERE l.vedette_chandon="'.$patronyme.' COLLATE latin1_swedish_ci = l.vedette_chandon"
 		');
         return $donnees->result(); // la fonction retourne les données stockés dans la variable $donnees
     }

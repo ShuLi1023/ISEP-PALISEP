@@ -276,8 +276,93 @@
 					$transfert = $resultat['transfert'];
 					$nom = $resultat['nom'];
 					
-					$this->Model_administration->mise_a_jour($_SERVER['DOCUMENT_ROOT'].'/fichiers_tmp/'.$nom,$table,$liste); // On insert les infos contenues dans le fichier xls dans la bdd
+					//$this->Model_administration->mise_a_jour($_SERVER['DOCUMENT_ROOT'].'/fichiers_tmp/'.$nom,$table,$liste); // On insert les infos contenues dans le fichier xls dans la bdd
 					
+					if(($_FILES['mediatheque'])){
+
+						$row = 1;
+						$handle = fopen($_SERVER['DOCUMENT_ROOT'].'/fichiers_tmp/'.$nom, "r");
+
+						  while (($data = fgetcsv($handle, 1000, ";")) !== FALSE) {
+						     $this->db->query("INSERT INTO legende_photos (libellé_image, vedette_chandon, 
+						     										auteur_cliché, type_cliché, 
+						     										année_cliché, pays, région, 
+						     										départment, commune, 
+						     										village, 
+						     										edifice_conservation, emplacement_dans_édifice,
+						     										photo,
+						     										commune_INSEE_number,ref_IM,
+						     										ref_PA,ref_IA,
+						     										famille,individu,
+						     										qualité,date,
+						     										dénomination,titre,
+						     										catégorie,matériau,
+						     										ref_reproductions,biblio,
+						     										remarques,auteurs,
+						     										lieu_édition,editeur,
+						     										année_édition,reliure,
+						     										provenance,site,
+						     										section,cote,
+						     										folio_emplacement)
+						     										 VALUES
+						     										 ('', '".mysql_real_escape_string($data[1])."',
+						     										 '".mysql_real_escape_string($data[2])."','',
+						     										 '', '".mysql_real_escape_string($data[3])."', '".mysql_real_escape_string($data[4])."',
+						     										 '".mysql_real_escape_string($data[6])."', '".mysql_real_escape_string($data[7])."',
+						     										 '".mysql_real_escape_string($data[8])."','".mysql_real_escape_string($data[9])."',
+						     										 '".mysql_real_escape_string($data[10])."' , '".mysql_real_escape_string($data[11])."',
+						     										 '".mysql_real_escape_string($data[12])."' , '".mysql_real_escape_string($data[13])."',
+
+						     										 '".mysql_real_escape_string($data[14])."', '".mysql_real_escape_string($data[15])."',
+						     										 '".mysql_real_escape_string($data[16])."', '".mysql_real_escape_string($data[17])."',
+
+						     										 '".mysql_real_escape_string($data[18])."', '".mysql_real_escape_string($data[19])."',
+						     										 '".mysql_real_escape_string($data[20])."', '".mysql_real_escape_string($data[21])."',
+						     										 '".mysql_real_escape_string($data[22])."', '".mysql_real_escape_string($data[23])."',
+
+						     										 '".mysql_real_escape_string($data[24])."', '".mysql_real_escape_string($data[25])."',
+						     										 '".mysql_real_escape_string($data[26])."', '".mysql_real_escape_string($data[27])."',
+						     										 '".mysql_real_escape_string($data[28])."', '".mysql_real_escape_string($data[29])."',
+						     										 '".mysql_real_escape_string($data[30])."', '".mysql_real_escape_string($data[31])."',
+						     										 '".mysql_real_escape_string($data[32])."', '".mysql_real_escape_string($data[33])."',
+						     										 '".mysql_real_escape_string($data[34])."', '".mysql_real_escape_string($data[35])."',
+						     										 '".mysql_real_escape_string($data[36])."')");
+						  }
+						  fclose($handle);	
+
+						} else if (isset($_FILES['familles'])){
+							$row = 1;
+							$handle = fopen($_SERVER['DOCUMENT_ROOT'].'/fichiers_tmp/'.$nom, "r");
+
+							  while (($data = fgetcsv($handle, 1000, ";")) !== FALSE) {
+							     $this->db->query("INSERT INTO armorial (patronyme,famille,
+							     										prenom,titres_dignites,
+							     										origine,date,
+							     										siècle,fief,
+							     										aire,pays,
+							     										région,région_bis,
+							     										départment,alliances,
+							     										notes,blasonnement_1,
+							     										cimiers,devise,
+							     										embleme,lambrequins,
+							     										support,observations,
+							     										ref_biblio)
+							     										 VALUES
+							     										 ('".mysql_real_escape_string($data[1])."', '".mysql_real_escape_string($data[1])."',
+							     										 '".mysql_real_escape_string($data[2])."','".mysql_real_escape_string($data[3])."',
+							     										 '".mysql_real_escape_string($data[4])."', '".mysql_real_escape_string($data[5])."',
+							     										 '".mysql_real_escape_string($data[6])."', '".mysql_real_escape_string($data[7])."',
+							     										 '".mysql_real_escape_string($data[8])."','".mysql_real_escape_string($data[9])."',
+							     										 '".mysql_real_escape_string($data[10])."' , '".mysql_real_escape_string($data[11])."',
+							     										 '".mysql_real_escape_string($data[12])."' , '".mysql_real_escape_string($data[13])."',
+							     										 '".mysql_real_escape_string($data[14])."', '".mysql_real_escape_string($data[15])."',
+							     										 '".mysql_real_escape_string($data[16])."', '".mysql_real_escape_string($data[17])."',
+							     										 '".mysql_real_escape_string($data[18])."', '".mysql_real_escape_string($data[19])."',
+							     										 '".mysql_real_escape_string($data[20])."', '".mysql_real_escape_string($data[21])."',
+							     										 '".mysql_real_escape_string($data[22])."')");
+							  }
+							  fclose($handle);	
+						}
 					// Suppression des fichiers excel uploadés
 					$repertoire = opendir($_SERVER['DOCUMENT_ROOT'].'/fichiers_tmp/');
 					$fichier_csv = $_SERVER['DOCUMENT_ROOT'].'/fichiers_tmp/'.$nom;
@@ -891,11 +976,11 @@
 						error_reporting(0);
 						
 						// Parse l'intégralité du fichier excel
-						for ($i = 0; $i <= $data->sheets[0]['numRows']; $i++) {
+						for ($i = 2; $i <= $data->sheets[0]['numRows']; $i++) {
 							for ($j = 0; $j <= $data->sheets[0]['numCols']; $j++) {
-								$donnees.=$data->sheets[0]['cells'][$i][$j]."\t";
+								$donnees.=$data->sheets[0]['cells'][$i][$j].";";
 							}
-							$donnees.="\r";
+							$donnees.="\r\n";
 						}
 						
 						//utf8_encode($donnees);
