@@ -1,58 +1,59 @@
 // DATA_TEMPLATE: empty_table
-oTest.fnStart( "oLanguage.sZeroRecords" );
+/*
+ * NOTE: There are some differences in this zero config script for server-side
+ * processing compared to the other data sources. The main reason for this is the
+ * difference in how the server-side processing does it's filtering. Also the
+ * sorting state is always reset on each draw.
+ */
+oTest.fnStart( "Sanity checks for DataTables with data from JS" );
+
+oTest.fnWaitTest( 
+	"jQuery.dataTable function",
+	null,
+	function () { return typeof jQuery().dataTable == "function"; }
+);
+
+oTest.fnWaitTest(
+	"jQuery.dataTableSettings storage array",
+	null,
+	function () { return typeof jQuery().dataTableSettings == "object"; }
+);
+
+oTest.fnWaitTest(
+	"jQuery.dataTableExt plugin object",
+	null,
+	function () { return typeof jQuery().dataTableExt == "object"; }
+);
 
 $(document).ready( function () {
-	/* Check the default */
-	var oTable = $('#example').dataTable( {
+	$('#example').dataTable( {
 		"bServerSide": true,
 		"sAjaxSource": "../../../examples/server_side/scripts/server_processing.php"
 	} );
-	var oSettings = oTable.fnSettings();
 	
+	/* Basic checks */
 	oTest.fnWaitTest( 
-		"Zero records language is 'No matching records found' by default",
+		"Length changing div exists",
 		null,
-		function () { return oSettings.oLanguage.sZeroRecords == "No matching records found"; }
+		function () { return document.getElementById('example_length') != null; }
 	);
-	
-	oTest.fnWaitTest(
-		"Text is shown when empty table (after filtering)",
-		function () { oTable.fnFilter('nothinghere'); },
-		function () {
-			if ( $('#example tbody tr td').length == 0 )
-				return false;
-			return $('#example tbody tr td')[0].innerHTML == "No matching records found";
-		}
-	);
-	
-	
 	
 	oTest.fnWaitTest( 
-		"Zero records language can be defined",
-		function () {
-			oSession.fnRestore();
-			oTable = $('#example').dataTable( {
-				"bServerSide": true,
-		"sAjaxSource": "../../../examples/server_side/scripts/server_processing.php",
-				"oLanguage": {
-					"sZeroRecords": "unit test"
-				}
-			} );
-			oSettings = oTable.fnSettings();
-		},
-		function () { return oSettings.oLanguage.sZeroRecords == "unit test"; }
+		"Filtering div exists",
+		null,
+		function () { return document.getElementById('example_filter') != null; }
 	);
 	
-	oTest.fnWaitTest(
-		"Text is shown when empty table (after filtering)",
-		function () { oTable.fnFilter('nothinghere2'); },
-		function () {
-			if ( $('#example tbody tr td').length == 0 )
-				return false;
-			return $('#example tbody tr td')[0].innerHTML == "unit test"
-		}
+	oTest.fnWaitTest( 
+		"Information div exists",
+		null,
+		function () { return document.getElementById('example_info') != null; }
 	);
 	
+	oTest.fnWaitTest( 
+		"Pagination div exists",
+		null,
+		function () { return document.getElementById('example_paginate') != null; }
+	);
 	
-	oTest.fnComplete();
-} );
+	oTest.fnWaitTest( 

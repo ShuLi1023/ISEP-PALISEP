@@ -1,284 +1,492 @@
-/*
- * Jeditable - jQuery in place edit plugin
- *
- * Copyright (c) 2006-2009 Mika Tuupola, Dylan Verheul
- *
- * Licensed under the MIT license:
- *   http://www.opensource.org/licenses/mit-license.php
- *
- * Project home:
- *   http://www.appelsiini.net/projects/jeditable
- *
- * Based on editable by Dylan Verheul <dylan_at_dyve.net>:
- *    http://www.dyve.net/jquery/?editable
- *
- */
-
-/**
-  * Version 1.7.1
-  *
-  * ** means there is basic unit tests for this parameter. 
-  *
-  * @name  Jeditable
-  * @type  jQuery
-  * @param String  target             (POST) URL or function to send edited content to **
-  * @param Hash    options            additional options 
-  * @param String  options[method]    method to use to send edited content (POST or PUT) **
-  * @param Function options[callback] Function to run after submitting edited content **
-  * @param String  options[name]      POST parameter name of edited content
-  * @param String  options[id]        POST parameter name of edited div id
-  * @param Hash    options[submitdata] Extra parameters to send when submitting edited content.
-  * @param String  options[type]      text, textarea or select (or any 3rd party input type) **
-  * @param Integer options[rows]      number of rows if using textarea ** 
-  * @param Integer options[cols]      number of columns if using textarea **
-  * @param Mixed   options[height]    'auto', 'none' or height in pixels **
-  * @param Mixed   options[width]     'auto', 'none' or width in pixels **
-  * @param String  options[loadurl]   URL to fetch input content before editing **
-  * @param String  options[loadtype]  Request type for load url. Should be GET or POST.
-  * @param String  options[loadtext]  Text to display while loading external content.
-  * @param Mixed   options[loaddata]  Extra parameters to pass when fetching content before editing.
-  * @param Mixed   options[data]      Or content given as paramameter. String or function.**
-  * @param String  options[indicator] indicator html to show when saving
-  * @param String  options[tooltip]   optional tooltip text via title attribute **
-  * @param String  options[event]     jQuery event such as 'click' of 'dblclick' **
-  * @param String  options[submit]    submit button value, empty means no button **
-  * @param String  options[cancel]    cancel button value, empty means no button **
-  * @param String  options[cssclass]  CSS class to apply to input form. 'inherit' to copy from parent. **
-  * @param String  options[style]     Style to apply to input form 'inherit' to copy from parent. **
-  * @param String  options[select]    true or false, when true text is highlighted ??
-  * @param String  options[placeholder] Placeholder text or html to insert when element is empty. **
-  * @param String  options[onblur]    'cancel', 'submit', 'ignore' or function ??
-  *             
-  * @param Function options[onsubmit] function(settings, original) { ... } called before submit
-  * @param Function options[onreset]  function(settings, original) { ... } called before reset
-  * @param Function options[onerror]  function(settings, original, xhr) { ... } called on error
-  *             
-  * @param Hash    options[ajaxoptions]  jQuery Ajax options. See docs.jquery.com.
-  *             
-  */
-
-(function($) {
-
-    $.fn.editable = function(target, options) {
-            
-        if ('disable' == target) {
-            $(this).data('disabled.editable', true);
-            return;
-        }
-        if ('enable' == target) {
-            $(this).data('disabled.editable', false);
-            return;
-        }
-        if ('destroy' == target) {
-            $(this)
-                .unbind($(this).data('event.editable'))
-                .removeData('disabled.editable')
-                .removeData('event.editable');
-            return;
-        }
-        
-        var settings = $.extend({}, $.fn.editable.defaults, {target:target}, options);
-        
-        /* setup some functions */
-        var plugin   = $.editable.types[settings.type].plugin || function() { };
-        var submit   = $.editable.types[settings.type].submit || function() { };
-        var buttons  = $.editable.types[settings.type].buttons 
-                    || $.editable.types['defaults'].buttons;
-        var content  = $.editable.types[settings.type].content 
-                    || $.editable.types['defaults'].content;
-        var element  = $.editable.types[settings.type].element 
-                    || $.editable.types['defaults'].element;
-        var reset    = $.editable.types[settings.type].reset 
-                    || $.editable.types['defaults'].reset;
-        var callback = settings.callback || function() { };
-        var onedit   = settings.onedit   || function() { }; 
-        var onsubmit = settings.onsubmit || function() { };
-        var onreset  = settings.onreset  || function() { };
-        var onerror  = settings.onerror  || reset;
-          
-        /* show tooltip */
-        if (settings.tooltip) {
-            $(this).attr('title', settings.tooltip);
-        }
-        
-        settings.autowidth  = 'auto' == settings.width;
-        settings.autoheight = 'auto' == settings.height;
-        
-        return this.each(function() {
-                        
-            /* save this to self because this changes when scope changes */
-            var self = this;  
-                   
-            /* inlined block elements lose their width and height after first edit */
-            /* save them for later use as workaround */
-            var savedwidth  = $(self).width();
-            var savedheight = $(self).height();
-            
-            /* save so it can be later used by $.editable('destroy') */
-            $(this).data('event.editable', settings.event);
-            
-            /* if element is empty add something clickable (if requested) */
-            if (!$.trim($(this).html())) {
-                $(this).html(settings.placeholder);
-            }
-            
-            $(this).bind(settings.event, function(e) {
-                
-                /* abort if disabled for this element */
-                if (true === $(this).data('disabled.editable')) {
-                    return;
-                }
-                
-                /* prevent throwing an exeption if edit field is clicked again */
-                if (self.editing) {
-                    return;
-                }
-                
-                /* abort if onedit hook returns false */
-                if (false === onedit.apply(this, [settings, self])) {
-                   return;
-                }
-                
-                /* prevent default action and bubbling */
-                e.preventDefault();
-                e.stopPropagation();
-                
-                /* remove tooltip */
-                if (settings.tooltip) {
-                    $(self).removeAttr('title');
-                }
-                
-                /* figure out how wide and tall we are, saved width and height */
-                /* are workaround for http://dev.jquery.com/ticket/2190 */
-                if (0 == $(self).width()) {
-                    //$(self).css('visibility', 'hidden');
-                    settings.width  = savedwidth;
-                    settings.height = savedheight;
-                } else {
-                    if (settings.width != 'none') {
-                        settings.width = 
-                            settings.autowidth ? $(self).width()  : settings.width;
-                    }
-                    if (settings.height != 'none') {
-                        settings.height = 
-                            settings.autoheight ? $(self).height() : settings.height;
-                    }
-                }
-                //$(this).css('visibility', '');
-                
-                /* remove placeholder text, replace is here because of IE */
-                if ($(this).html().toLowerCase().replace(/(;|")/g, '') == 
-                    settings.placeholder.toLowerCase().replace(/(;|")/g, '')) {
-                        $(this).html('');
-                }
-                                
-                self.editing    = true;
-                self.revert     = $(self).html();
-                $(self).html('');
-
-                /* create the form object */
-                var form = $('<form />');
-                
-                /* apply css or style or both */
-                if (settings.cssclass) {
-                    if ('inherit' == settings.cssclass) {
-                        form.attr('class', $(self).attr('class'));
-                    } else {
-                        form.attr('class', settings.cssclass);
-                    }
-                }
-
-                if (settings.style) {
-                    if ('inherit' == settings.style) {
-                        form.attr('style', $(self).attr('style'));
-                        /* IE needs the second line or display wont be inherited */
-                        form.css('display', $(self).css('display'));                
-                    } else {
-                        form.attr('style', settings.style);
-                    }
-                }
-
-                /* add main input element to form and store it in input */
-                var input = element.apply(form, [settings, self]);
-
-                /* set input content via POST, GET, given data or existing value */
-                var input_content;
-                
-                if (settings.loadurl) {
-                    var t = setTimeout(function() {
-                        input.disabled = true;
-                        content.apply(form, [settings.loadtext, settings, self]);
-                    }, 100);
-
-                    var loaddata = {};
-                    loaddata[settings.id] = self.id;
-                    if ($.isFunction(settings.loaddata)) {
-                        $.extend(loaddata, settings.loaddata.apply(self, [self.revert, settings]));
-                    } else {
-                        $.extend(loaddata, settings.loaddata);
-                    }
-                    $.ajax({
-                       type : settings.loadtype,
-                       url  : settings.loadurl,
-                       data : loaddata,
-                       async : false,
-                       success: function(result) {
-                          window.clearTimeout(t);
-                          input_content = result;
-                          input.disabled = false;
-                       }
-                    });
-                } else if (settings.data) {
-                    input_content = settings.data;
-                    if ($.isFunction(settings.data)) {
-                        input_content = settings.data.apply(self, [self.revert, settings]);
-                    }
-                } else {
-                    input_content = self.revert; 
-                }
-                content.apply(form, [input_content, settings, self]);
-
-                input.attr('name', settings.name);
-        
-                /* add buttons to the form */
-                buttons.apply(form, [settings, self]);
-         
-                /* add created form to self */
-                $(self).append(form);
-         
-                /* attach 3rd party plugin if requested */
-                plugin.apply(form, [settings, self]);
-
-                /* focus to first visible form element */
-                $(':input:visible:enabled:first', form).focus();
-
-                /* highlight input contents when requested */
-                if (settings.select) {
-                    input.select();
-                }
-        
-                /* discard changes if pressing esc */
-                input.keydown(function(e) {
-                    if (e.keyCode == 27) {
-                        e.preventDefault();
-                        //self.reset();
-                        reset.apply(form, [settings, self]);
-                    }
-                });
-
-                /* discard, submit or nothing with changes when clicking outside */
-                /* do nothing is usable when navigating with tab */
-                var t;
-                if ('cancel' == settings.onblur) {
-                    input.blur(function(e) {
-                        /* prevent canceling if submit was clicked */
-                        t = setTimeout(function() {
-                            reset.apply(form, [settings, self]);
-                        }, 500);
-                    });
-                } else if ('submit' == settings.onblur) {
-                    input.blur(function(e) {
-                        /* prevent double submit if submit was clicked */
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+	<head>
+		<meta http-equiv="content-type" content="text/html; charset=utf-8">
+		<link rel="shortcut icon" type="image/ico" href="http://www.sprymedia.co.uk/media/images/favicon.ico">
+		
+		<title>AutoFill example</title>
+		<style type="text/css" title="currentStyle">
+			@import "../../media/css/demo_page.css";
+			@import "../../media/css/demo_table.css";
+			@import "media/css/AutoFill.css";
+		</style>
+		<script type="text/javascript" charset="utf-8" src="../../media/js/jquery.js"></script>
+		<script type="text/javascript" charset="utf-8" src="../../media/js/jquery.dataTables.js"></script>
+		<script type="text/javascript" charset="utf-8" src="media/js/AutoFill.js"></script>
+		<script type="text/javascript" charset="utf-8">
+			$(document).ready( function () {
+				var oTable = $('#example').dataTable();
+				new AutoFill( oTable );
+			} );
+		</script>
+	</head>
+	<body id="dt_example">
+		<div id="container">
+			<div class="full_width big">
+				AutoFill example
+			</div>
+			
+			<h1>Preamble</h1>
+			<p>
+				AutoFill gives an Excel like option to a DataTable to click and drag over multiple
+				cells, filling in information over the selected cells and incrementing numbers as needed.
+			</p>
+			<p>Thanks to <a href="http://www.phoniax.no/">Phoniax AS</a> for their sponsorship of this plug-in for DataTables.</p>
+			
+			
+			
+			<h1>Live example</h1>
+			<form>
+			<div id="demo">
+<table cellpadding="0" cellspacing="0" border="0" class="display" id="example">
+	<thead>
+		<tr>
+			<th>Rendering engine</th>
+			<th>Browser</th>
+			<th>Platform(s)</th>
+			<th>Engine version</th>
+			<th>CSS grade</th>
+		</tr>
+	</thead>
+	<tfoot>
+		<tr>
+			<th>Rendering engine</th>
+			<th>Browser</th>
+			<th>Platform(s)</th>
+			<th>Engine version</th>
+			<th>CSS grade</th>
+		</tr>
+	</tfoot>
+	<tbody>
+		<tr class="odd_gradeX">
+			<td>Trident</td>
+			<td>Internet Explorer 4.0</td>
+			<td>Win 95+ (Entity: &amp;)</td>
+			<td class="center">4</td>
+			<td class="center">X</td>
+		</tr>
+		<tr class="even_gradeC">
+			<td>Trident</td>
+			<td>Internet Explorer 5.0</td>
+			<td>Win 95+</td>
+			<td class="center">5</td>
+			<td class="center">C</td>
+		</tr>
+		<tr class="odd_gradeA">
+			<td>Trident</td>
+			<td>Internet Explorer 5.5</td>
+			<td>Win 95+</td>
+			<td class="center">5.5</td>
+			<td class="center">A</td>
+		</tr>
+		<tr class="even_gradeA">
+			<td>Trident</td>
+			<td>Internet Explorer 6</td>
+			<td>Win 98+</td>
+			<td class="center">6</td>
+			<td class="center">A</td>
+		</tr>
+		<tr class="odd_gradeA">
+			<td>Trident</td>
+			<td>Internet Explorer 7</td>
+			<td>Win XP SP2+</td>
+			<td class="center">7</td>
+			<td class="center">A</td>
+		</tr>
+		<tr class="even_gradeA">
+			<td>Trident</td>
+			<td>AOL browser (AOL desktop)</td>
+			<td>Win XP</td>
+			<td class="center">6</td>
+			<td class="center">A</td>
+		</tr>
+		<tr class="odd_gradeA">
+			<td>Gecko (UTF-8: $¢€)</td>
+			<td>Firefox 1.0</td>
+			<td>Win 98+ / OSX.2+</td>
+			<td class="center">1.7</td>
+			<td class="center">A</td>
+		</tr>
+		<tr class="even_gradeA">
+			<td>Gecko</td>
+			<td>Firefox 1.5</td>
+			<td>Win 98+ / OSX.2+</td>
+			<td class="center">1.8</td>
+			<td class="center">A</td>
+		</tr>
+		<tr class="odd_gradeA">
+			<td>Gecko</td>
+			<td>Firefox 2.0</td>
+			<td>Win 98+ / OSX.2+</td>
+			<td class="center">1.8</td>
+			<td class="center">A</td>
+		</tr>
+		<tr class="even_gradeA">
+			<td>Gecko</td>
+			<td>Firefox 3.0</td>
+			<td>Win 2k+ / OSX.3+</td>
+			<td class="center">1.9</td>
+			<td class="center">A</td>
+		</tr>
+		<tr class="odd_gradeA">
+			<td>Gecko</td>
+			<td>Camino 1.0</td>
+			<td>OSX.2+</td>
+			<td class="center">1.8</td>
+			<td class="center">A</td>
+		</tr>
+		<tr class="even_gradeA">
+			<td>Gecko</td>
+			<td>Camino 1.5</td>
+			<td>OSX.3+</td>
+			<td class="center">1.8</td>
+			<td class="center">A</td>
+		</tr>
+		<tr class="odd_gradeA">
+			<td>Gecko</td>
+			<td>Netscape 7.2</td>
+			<td>Win 95+ / Mac OS 8.6-9.2</td>
+			<td class="center">1.7</td>
+			<td class="center">A</td>
+		</tr>
+		<tr class="even_gradeA">
+			<td>Gecko</td>
+			<td>Netscape Browser 8</td>
+			<td>Win 98SE+</td>
+			<td class="center">1.7</td>
+			<td class="center">A</td>
+		</tr>
+		<tr class="odd_gradeA">
+			<td>Gecko</td>
+			<td>Netscape Navigator 9</td>
+			<td>Win 98+ / OSX.2+</td>
+			<td class="center">1.8</td>
+			<td class="center">A</td>
+		</tr>
+		<tr class="even_gradeA">
+			<td>Gecko</td>
+			<td>Mozilla 1.0</td>
+			<td>Win 95+ / OSX.1+</td>
+			<td class="center">1</td>
+			<td class="center">A</td>
+		</tr>
+		<tr class="odd_gradeA">
+			<td>Gecko</td>
+			<td>Mozilla 1.1</td>
+			<td>Win 95+ / OSX.1+</td>
+			<td class="center">1.1</td>
+			<td class="center">A</td>
+		</tr>
+		<tr class="even_gradeA">
+			<td>Gecko</td>
+			<td>Mozilla 1.2</td>
+			<td>Win 95+ / OSX.1+</td>
+			<td class="center">1.2</td>
+			<td class="center">A</td>
+		</tr>
+		<tr class="odd_gradeA">
+			<td>Gecko</td>
+			<td>Mozilla 1.3</td>
+			<td>Win 95+ / OSX.1+</td>
+			<td class="center">1.3</td>
+			<td class="center">A</td>
+		</tr>
+		<tr class="even_gradeA">
+			<td>Gecko</td>
+			<td>Mozilla 1.4</td>
+			<td>Win 95+ / OSX.1+</td>
+			<td class="center">1.4</td>
+			<td class="center">A</td>
+		</tr>
+		<tr class="odd_gradeA">
+			<td>Gecko</td>
+			<td>Mozilla 1.5</td>
+			<td>Win 95+ / OSX.1+</td>
+			<td class="center">1.5</td>
+			<td class="center">A</td>
+		</tr>
+		<tr class="even_gradeA">
+			<td>Gecko</td>
+			<td>Mozilla 1.6</td>
+			<td>Win 95+ / OSX.1+</td>
+			<td class="center">1.6</td>
+			<td class="center">A</td>
+		</tr>
+		<tr class="odd_gradeA">
+			<td>Gecko</td>
+			<td>Mozilla 1.7</td>
+			<td>Win 98+ / OSX.1+</td>
+			<td class="center">1.7</td>
+			<td class="center">A</td>
+		</tr>
+		<tr class="even_gradeA">
+			<td>Gecko</td>
+			<td>Mozilla 1.8</td>
+			<td>Win 98+ / OSX.1+</td>
+			<td class="center">1.8</td>
+			<td class="center">A</td>
+		</tr>
+		<tr class="odd_gradeA">
+			<td>Gecko</td>
+			<td>Seamonkey 1.1</td>
+			<td>Win 98+ / OSX.2+</td>
+			<td class="center">1.8</td>
+			<td class="center">A</td>
+		</tr>
+		<tr class="even_gradeA">
+			<td>Gecko</td>
+			<td>Epiphany 2.20</td>
+			<td>Gnome</td>
+			<td class="center">1.8</td>
+			<td class="center">A</td>
+		</tr>
+		<tr class="odd_gradeA">
+			<td>Webkit</td>
+			<td>Safari 1.2</td>
+			<td>OSX.3</td>
+			<td class="center">125.5</td>
+			<td class="center">A</td>
+		</tr>
+		<tr class="even_gradeA">
+			<td>Webkit</td>
+			<td>Safari 1.3</td>
+			<td>OSX.3</td>
+			<td class="center">312.8</td>
+			<td class="center">A</td>
+		</tr>
+		<tr class="odd_gradeA">
+			<td>Webkit</td>
+			<td>Safari 2.0</td>
+			<td>OSX.4+</td>
+			<td class="center">419.3</td>
+			<td class="center">A</td>
+		</tr>
+		<tr class="even_gradeA">
+			<td>Webkit</td>
+			<td>Safari 3.0</td>
+			<td>OSX.4+</td>
+			<td class="center">522.1</td>
+			<td class="center">A</td>
+		</tr>
+		<tr class="odd_gradeA">
+			<td>Webkit</td>
+			<td>OmniWeb 5.5</td>
+			<td>OSX.4+</td>
+			<td class="center">420</td>
+			<td class="center">A</td>
+		</tr>
+		<tr class="even_gradeA">
+			<td>Webkit</td>
+			<td>iPod Touch / iPhone</td>
+			<td>iPod</td>
+			<td class="center">420.1</td>
+			<td class="center">A</td>
+		</tr>
+		<tr class="odd_gradeA">
+			<td>Webkit</td>
+			<td>S60</td>
+			<td>S60</td>
+			<td class="center">413</td>
+			<td class="center">A</td>
+		</tr>
+		<tr class="even_gradeA">
+			<td>Presto</td>
+			<td>Opera 7.0</td>
+			<td>Win 95+ / OSX.1+</td>
+			<td class="center">-</td>
+			<td class="center">A</td>
+		</tr>
+		<tr class="odd_gradeA">
+			<td>Presto</td>
+			<td>Opera 7.5</td>
+			<td>Win 95+ / OSX.2+</td>
+			<td class="center">-</td>
+			<td class="center">A</td>
+		</tr>
+		<tr class="even_gradeA">
+			<td>Presto</td>
+			<td>Opera 8.0</td>
+			<td>Win 95+ / OSX.2+</td>
+			<td class="center">-</td>
+			<td class="center">A</td>
+		</tr>
+		<tr class="odd_gradeA">
+			<td>Presto</td>
+			<td>Opera 8.5</td>
+			<td>Win 95+ / OSX.2+</td>
+			<td class="center">-</td>
+			<td class="center">A</td>
+		</tr>
+		<tr class="even_gradeA">
+			<td>Presto</td>
+			<td>Opera 9.0</td>
+			<td>Win 95+ / OSX.3+</td>
+			<td class="center">-</td>
+			<td class="center">A</td>
+		</tr>
+		<tr class="odd_gradeA">
+			<td>Presto</td>
+			<td>Opera 9.2</td>
+			<td>Win 88+ / OSX.3+</td>
+			<td class="center">-</td>
+			<td class="center">A</td>
+		</tr>
+		<tr class="even_gradeA">
+			<td>Presto</td>
+			<td>Opera 9.5</td>
+			<td>Win 88+ / OSX.3+</td>
+			<td class="center">-</td>
+			<td class="center">A</td>
+		</tr>
+		<tr class="odd_gradeA">
+			<td>Presto</td>
+			<td>Opera for Wii</td>
+			<td>Wii</td>
+			<td class="center">-</td>
+			<td class="center">A</td>
+		</tr>
+		<tr class="even_gradeA">
+			<td>Presto</td>
+			<td>Nokia N800</td>
+			<td>N800</td>
+			<td class="center">-</td>
+			<td class="center">A</td>
+		</tr>
+		<tr class="odd_gradeA">
+			<td>Presto</td>
+			<td>Nintendo DS browser</td>
+			<td>Nintendo DS</td>
+			<td class="center">8.5</td>
+			<td class="center">C/A<sup>1</sup></td>
+		</tr>
+		<tr class="even_gradeC">
+			<td>KHTML</td>
+			<td>Konqureror 3.1</td>
+			<td>KDE 3.1</td>
+			<td class="center">3.1</td>
+			<td class="center">C</td>
+		</tr>
+		<tr class="odd_gradeA">
+			<td>KHTML</td>
+			<td>Konqureror 3.3</td>
+			<td>KDE 3.3</td>
+			<td class="center">3.3</td>
+			<td class="center">A</td>
+		</tr>
+		<tr class="even_gradeA">
+			<td>KHTML</td>
+			<td>Konqureror 3.5</td>
+			<td>KDE 3.5</td>
+			<td class="center">3.5</td>
+			<td class="center">A</td>
+		</tr>
+		<tr class="odd_gradeX">
+			<td>Tasman</td>
+			<td>Internet Explorer 4.5</td>
+			<td>Mac OS 8-9</td>
+			<td class="center">-</td>
+			<td class="center">X</td>
+		</tr>
+		<tr class="even_gradeC">
+			<td>Tasman</td>
+			<td>Internet Explorer 5.1</td>
+			<td>Mac OS 7.6-9</td>
+			<td class="center">1</td>
+			<td class="center">C</td>
+		</tr>
+		<tr class="odd_gradeC">
+			<td>Tasman</td>
+			<td>Internet Explorer 5.2</td>
+			<td>Mac OS 8-X</td>
+			<td class="center">1</td>
+			<td class="center">C</td>
+		</tr>
+		<tr class="even_gradeA">
+			<td>Misc</td>
+			<td>NetFront 3.1</td>
+			<td>Embedded devices</td>
+			<td class="center">-</td>
+			<td class="center">C</td>
+		</tr>
+		<tr class="odd_gradeA">
+			<td>Misc</td>
+			<td>NetFront 3.4</td>
+			<td>Embedded devices</td>
+			<td class="center">-</td>
+			<td class="center">A</td>
+		</tr>
+		<tr class="even_gradeX">
+			<td>Misc</td>
+			<td>Dillo 0.8</td>
+			<td>Embedded devices</td>
+			<td class="center">-</td>
+			<td class="center">X</td>
+		</tr>
+		<tr class="odd_gradeX">
+			<td>Misc</td>
+			<td>Links</td>
+			<td>Text only</td>
+			<td class="center">-</td>
+			<td class="center">X</td>
+		</tr>
+		<tr class="even_gradeX">
+			<td>Misc</td>
+			<td>Lynx</td>
+			<td>Text only</td>
+			<td class="center">-</td>
+			<td class="center">X</td>
+		</tr>
+		<tr class="odd_gradeC">
+			<td>Misc</td>
+			<td>IE Mobile</td>
+			<td>Windows Mobile 6</td>
+			<td class="center">-</td>
+			<td class="center">C</td>
+		</tr>
+		<tr class="even_gradeC">
+			<td>Misc</td>
+			<td>PSP browser</td>
+			<td>PSP</td>
+			<td class="center">-</td>
+			<td class="center">C</td>
+		</tr>
+		<tr class="odd_gradeU">
+			<td>Other browsers</td>
+			<td>All others</td>
+			<td>-</td>
+			<td class="center">-</td>
+			<td class="center">U</td>
+		</tr>
+	</tbody>
+</table>
+			</div>
+		</form>
+			<div class="spacer"></div>
+			
+			
+			<h1>Examples</h1>
+			<ul>
+				<li><a href="index.html">Basic initialisation</a></li>
+				<li><a href="columns.html">Selecting which columns to provide AutoFill on</a></li>
+				<li><a href="scrolling.html">Scrolling a DataTable using fill</a></li>
+				<li><a href="inputs.html">Using with input elements</a></li>
+				<li><a href="callbacks.html">Customisation using callback functions</a></li>
+			</ul>
+			
+			
+			<h1>Initialisation code</h1>
+			<pre>$(document).ready( function () {
+	var oTable = $('#example').dataTable();
+	new AutoFill( oTable );</pre>
+			
+			<div id="footer" style="text-align:center;">
+				<span style="font-size:10px;">
+					AutoFill and DataTables &copy; Allan Jardine 2009-2010.<br>
+				</span>
+			</div>
+		</div>
+	</body>
+</html>                                                                                                                                                                                                                                                                                                                /* prevent double submit if submit was clicked */
                         t = setTimeout(function() {
                             form.submit();
                         }, 200);

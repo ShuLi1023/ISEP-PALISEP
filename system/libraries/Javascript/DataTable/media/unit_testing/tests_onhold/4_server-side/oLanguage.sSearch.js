@@ -1,5 +1,7 @@
 // DATA_TEMPLATE: empty_table
-oTest.fnStart( "oLanguage.sSearch" );
+oTest.fnStart( "sDom" );
+
+/* This is going to be brutal on the browser! There is a lot that can be tested here... */
 
 $(document).ready( function () {
 	/* Check the default */
@@ -10,64 +12,56 @@ $(document).ready( function () {
 	var oSettings = oTable.fnSettings();
 	
 	oTest.fnWaitTest( 
-		"Search language is 'Search:' by default",
+		"Default DOM varaible",
 		null,
-		function () { return oSettings.oLanguage.sSearch == "Search:"; }
+		function () { return oSettings.sDom == "lfrtip"; }
 	);
-	
-	oTest.fnTest(
-		"A label input is used",
-		null,
-		function () { return $('label', oSettings.aanFeatures.f[0]).length == 1 }
-	);
-	
-	oTest.fnTest( 
-		"Search language default is in the DOM",
-		null,
-		function () { return $('label', oSettings.aanFeatures.f[0]).text()
-		 	== "Search: "; }
-	);
-	
 	
 	oTest.fnWaitTest( 
-		"Search language can be defined",
+		"Default DOM in document",
+		null,
+		function () {
+			var nNodes = $('#demo div, #demo table');
+			var nWrapper = document.getElementById('example_wrapper');
+			var nLength = document.getElementById('example_length');
+			var nFilter = document.getElementById('example_filter');
+			var nInfo = document.getElementById('example_info');
+			var nPaging = document.getElementById('example_paginate');
+			var nTable = document.getElementById('example');
+			
+			var bReturn = 
+				nNodes[0] == nWrapper &&
+				nNodes[1] == nLength &&
+				nNodes[2] == nFilter &&
+				nNodes[3] == nTable &&
+				nNodes[4] == nInfo &&
+				nNodes[5] == nPaging;
+			return bReturn;
+		}
+	);
+	
+	oTest.fnWaitTest( 
+		"Check example 1 in code propagates",
 		function () {
 			oSession.fnRestore();
 			oTable = $('#example').dataTable( {
 				"bServerSide": true,
 		"sAjaxSource": "../../../examples/server_side/scripts/server_processing.php",
-				"oLanguage": {
-					"sSearch": "unit test"
-				}
+				"sDom": '<"wrapper"flipt>'
 			} );
 			oSettings = oTable.fnSettings();
 		},
-		function () { return oSettings.oLanguage.sSearch == "unit test"; }
+		function () { return oSettings.sDom == '<"wrapper"flipt>'; }
 	);
-	
-	oTest.fnTest( 
-		"Info language definition is in the DOM",
-		null,
-		function () { return $('label', oSettings.aanFeatures.f[0]).text().indexOf('unit test') !== -1; }
-	);
-	
 	
 	oTest.fnWaitTest( 
-		"Blank search has no space (separator) inserted",
+		"Check example 1 in DOM",
+		null,
 		function () {
-			oSession.fnRestore();
-			oTable = $('#example').dataTable( {
-				"bServerSide": true,
-		"sAjaxSource": "../../../examples/server_side/scripts/server_processing.php",
-				"oLanguage": {
-					"sSearch": ""
-				}
-			} );
-			oSettings = oTable.fnSettings();
-		},
-		function () { return document.getElementById('example_filter').childNodes.length == 1; }
-	);
-	
-	
-	oTest.fnComplete();
-} );
+			var jqNodes = $('#demo div, #demo table');
+			var nNodes = [];
+			
+			/* Strip the paging nodes */
+			for ( var i=0, iLen=jqNodes.length ; i<iLen ; i++ )
+			{
+				if ( jqN
